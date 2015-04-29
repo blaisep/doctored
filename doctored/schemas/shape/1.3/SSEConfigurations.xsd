@@ -1,0 +1,4067 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+	<!-- TOP Level -->
+	<xs:element name="shapeshifter">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				Schema for ShapeShifter configurations. Copyright (c) 2014-2015 Shape Security, Inc.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="device" minOccurs="0" />
+				<xs:element ref="cluster" minOccurs="0" />
+				<xs:element ref="extension" minOccurs="0" />
+			</xs:all>
+			<xs:attribute name="version" type="xs:string" fixed="1.0.0" use="required">
+				<xs:annotation><xs:documentation>
+					Version of ShapeShifter Configuration Schema.
+					This has a fixed value for a ShapeShifter software release.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="content-id" type="xs:string" use="required">
+				<xs:annotation><xs:documentation>
+					A unique id string to identify the configuration content, assigned by SMS.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- 'override' attribute: this attribute dictates the action when we have 2 instances of the same element from 2 different
+		files (default and custom); 'false' means we combine all the sub-elements; 'true' means we override this element in the default
+		with the element in the custom file. -->
+	<!-- 'firmware-only' attribute: this attribute determines if an element is restricted to firmware and can not be specified in custom.xml. -->
+	<!-- 'dynamic-change-safe' attribute: this attribute determines if an element (and it's sub-elements) can safely be updated
+		at run time without requiring a restart of the hint.	Lack of this attribute means the element can not be safely be updated
+		at run time. -->
+	<!-- <extension>, <device> and <cluster> -->
+	<xs:element name="extension">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				Settings for new features in development stage.
+				The content is not validated by the main schema, thus provides flexibility for new development without
+				frequently changing Hint policy code. Once the new feature is stable, its setting would be incorporated
+				into proper location for new releases.
+
+				The elements of extension are documented in extension.xsd.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:any minOccurs="0" maxOccurs="unbounded" processContents="skip" />
+			</xs:sequence>
+			<!-- children of "extension" elements are merged; but same sub-elements are overridden -->
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="device">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				Properties specific to a SSE device.
+
+				Note, in current release, it only has device-id, which is auto populated.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="device-id" minOccurs="0" type="xs:token">
+					<xs:annotation><xs:documentation>
+						In production, ShapeShifter knows its unique id from hardware SN# or VM UUID etc, and this
+						config is not used.
+
+						In test run (hint.sh), this configure provides a Unique identification of a SSE device.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="cluster">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				SSC cluster-wise configuration such as counter-measure policy, network setup,
+				and event emission, etc.
+
+				The configuration is pushed by SSC cluster leader to each SSE device, to ensure the same counter-measure
+				policy is enforced across the SSE devices within the same SSC cluster.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="properties" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						- TODO, most of these items will be obsoleted for SC2 Vallejo.
+						- TODO: global.properties: User and Device identification settings. Usually set once at device setup.
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:all>
+							<xs:element name="customer-id" type="ss-customer-id" />
+							<xs:element name="browser-telemetry-name" type="xs:token" />
+							<xs:element name="secure-token-name" type="xs:token" />
+							<xs:element name="oob-telemetry-url-name" type="xs:token" />
+							<xs:element name="oob-telemetry-post-param" type="xs:token" />
+							<xs:element name="form-policymask-element" type="xs:token" />
+						</xs:all>
+					</xs:complexType>
+				</xs:element>
+				<xs:element ref="event-log" minOccurs="0" />
+				<xs:element ref="tal-rest-api" minOccurs="0" />
+				<xs:element ref="network" minOccurs="0" />
+				<xs:element ref="security" minOccurs="0" />
+				<xs:element ref="browser-data" minOccurs="0" />
+				<xs:element ref="monitor" minOccurs="0" />
+				<xs:element name="connectivity-diagnostics-mode" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						(hidden, for Shape only)
+						Diagnostic mode to test the end-to-end connectivity from user device to target web site, via
+						load balancer, ShapeShifter, and the network topology. This mode works with a client script
+						to validate the ShapeShifter network setup and configuration.
+
+						See [End-to-End Connectivity Diagnostics](http://confluence.shape/display/ICBM/End-to-End+Diagnostic+for+ShapeShifter)
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:attribute name="enabled" type="xs:boolean" default="true" />
+					</xs:complexType>
+				</xs:element>
+				<xs:element ref="external-content-cache" minOccurs="0" />
+				<xs:element ref="http-intermediate-cache" minOccurs="0" />
+				<xs:element ref="policy" minOccurs="0" />
+				<xs:element ref="web-traffic-capture" minOccurs="0" />
+				<xs:element ref="debug" minOccurs="0" />
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- device -->
+	<xs:element name="event-log">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				Specifying the rules for logging and publishing events to local log files and external syslog server.
+
+				This controls the emitting of event logs, filtered with log level, id, threshold, match, etc.
+
+				- The transportation to SDS is tailing the local log files.
+				- The transportation to external syslog server is controlled by "external-log-server".
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="log-level">
+					<xs:annotation><xs:documentation>
+						Sets the base event log severity level threshold. Any event log equal to
+						or severer than this severity threshold will by default be logged.
+
+						- Default value: warn
+						- Allowable values: panic, alert, critical, error, warn, notice, info (from most severe to least severe)
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="panic">
+								<xs:annotation><xs:documentation>System is unusable.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="alert">
+								<xs:annotation><xs:documentation>Primary function is not working. Must fix immediately.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="critical">
+								<xs:annotation><xs:documentation>Non-primary function is not working. Must fix immediately.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="error">
+								<xs:annotation><xs:documentation>Non-urgent failures.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="warn">
+								<xs:annotation><xs:documentation>Warning messages, not necessarily an error yet.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="notice">
+								<xs:annotation><xs:documentation>Unusual events but not error conditions. No need for immediate action.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="info">
+								<xs:annotation><xs:documentation>Normal operational messages.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="external-log-server" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						To configure the network connection to an external syslog server.
+
+						See [HINT Syslog design doc](https://docs.google.com/a/intrafile.com/document/d/1G6HiWpmA-akxB328VYYQnIKbNZPMWtRwZwOp6INkhjs/edit)
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:all>
+							<xs:element name="ssl-enabled" minOccurs="0" type="xs:boolean">
+								<xs:annotation><xs:documentation>
+									To specify whether the syslog server required SSL/TLS transport. If ssl-enabled is
+									true, then "keystore" and "passphrase" must be configured.
+
+									- Default value: false.
+									- Allowable values:
+										- true: SSL/TLS transport layer is enabled.
+										- false: SSL/TLS is disabled, UDP is the transport layer.
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="keystore" minOccurs="0" type="path-str">
+								<xs:annotation><xs:documentation>
+									Path to Java Key Store (JKS) file containing root certificate
+									for the syslog server certificate.
+									See [Setting Up Keystore File](http://confluence.shape/display/BT/Hint+Forward+Proxy+Mode#HintForwardProxyMode-SettingUpAKeystoreFile) for details.
+
+									- Default value: None. Must be specified if "ssl-enabled" is true.
+									- Allowable values: Valid path to JKS file. Can be relative to config directory.
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="passphrase" minOccurs="0" type="xs:string">
+								<xs:annotation><xs:documentation>
+									Defines the passphrase for the key store used by the ShapeShifter Forward Proxy.
+									See [Setting Up Keystore File](http://confluence.shape/display/BT/Hint+Forward+Proxy+Mode#HintForwardProxyMode-SettingUpAKeystoreFile) for details.
+
+									- Default value: None. Must be specified if "ssl-enabled" is true.
+									- Allowable values: String, must be at least 6 characters long.
+										See [keytool documentation](http://docs.oracle.com/javase/6/docs/technotes/tools/windows/keytool.html)
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="server-name" type="xs:string">
+								<xs:annotation><xs:documentation>
+									To specify the hostname or IP address for the external syslog server.
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="server-port" minOccurs="0" type="ss-port">
+								<xs:annotation><xs:documentation>
+									To specify syslog server port number.
+
+									The default value is based on whether the SSL is enabled or not.
+									Default value for SSL-enbled syslog host is 6514 as defined in RFC5425.
+									Default value for UDP syslog host is 514.
+								</xs:documentation></xs:annotation>
+							</xs:element>
+						</xs:all>
+						<xs:attribute name="enabled" type="xs:boolean" default="true">
+							<xs:annotation><xs:documentation>
+								To enable the connection to the specified external syslog server.
+							</xs:documentation></xs:annotation>
+						</xs:attribute>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="include-url" minOccurs="0" type="xs:boolean">
+					<xs:annotation><xs:documentation>
+						Specifies whether an event log message can include the request's URL information, if applicable
+						to that log message.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="event" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation><xs:documentation>
+						- Purpose: Overrides default reporting rules for one or more events.
+						- Unique? No, multiple event blocks may be specified
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="id" maxOccurs="unbounded">
+								<xs:annotation><xs:documentation>
+									id of the event (or events) controlled by this block. Mandatory field.
+
+									- Unique? No. Multiple values may be supplied. One per id tag.
+									- Default value: none, must be supplied
+									- Allowable values: must follow the type.index convention which uniquely identifies an event.
+										- type : value from 0-5
+										- index : value from 1-n
+										- See [ShapeShifter Event List](http://confluence.shape/display/ICBM/ShapeShifter+Event+List) for the complete list.
+								</xs:documentation></xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:string">
+										<xs:pattern value="(([0-5])\.){1}([0-9]|[1-9][0-9])" />
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element name="publish" minOccurs="0" type="xs:boolean" default="true">
+								<xs:annotation><xs:documentation>
+									Controls whether or not specified event is published, overriding log-level control.
+
+									- Unique? Yes.
+									- Default value: true
+									- Allowable values:
+										- true : generated event matching id(s) will be published
+										- false : generated events matching id(s) will not be published
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="frequency" minOccurs="0" type="xs:nonNegativeInteger" default="0">
+								<xs:annotation><xs:documentation>
+									Controls frequency of event generation (in seconds).
+
+									If non-zero, a summary of the events of the specified id will be generated at the
+									specified interval. If no events of the specified type are generated, then no event
+									will be logged. If one or more events are generated, then the details of the first
+									event generated in the interval specified will be generated, along with a count of
+									the number of times the event was generated in that interval.
+
+									- Unique? Yes.
+									- Default value: 0
+									- Allowable values:
+									- 0 : generated event will be instantly published when generated
+									- 1+ : generated will be published every (value) seconds, as long as the event occurs at least once.
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="threshold" minOccurs="0" type="xs:positiveInteger" default="1">
+								<xs:annotation><xs:documentation>
+									When the frequency is greater than 0, the threshold is
+									the count of event report occurrences that must be reached before a report is issued.
+									If the frequency expires and the threshold is reached, the event is reported with
+									the count. If the frequency expires and the threshold has not been reached, the
+									event is not reported, the event info (if any) is discarded, and the count is reset
+									to 0. If frequency equals 0, this setting has no effect.
+
+									- Unique? Yes.
+									- Default value: 1
+									- Allowable values: 1+ : event count threshold for reporting
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="match" minOccurs="0" maxOccurs="unbounded">
+								<xs:annotation><xs:documentation>
+									Purpose: Further refine how an event is to be reported.
+									Applies filtering rules to the parent event block.
+
+									- Unique? No, zero or more match blocks may be specified for each event block.
+									- Match operations are evaluated sequentially, not in an 'and' or 'or' combining approach.
+								</xs:documentation></xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="key" minOccurs="0">
+											<xs:annotation><xs:documentation>
+												Event field used for the filtering rule.
+
+												- TODO, Mandatory field. Note that not all events have values for all keys.
+												- Specifying a key for an event that does not produce it will not match
+												the rule, but no error will be generated.
+												- Unique? Yes.
+												- Default value: none, must be supplied
+												- Allowable values: One of the following values must be supplied.
+													- msg : match on the message parameter of the event
+													- uri : match on the uri parameter of the event
+													- xff : match on the X-Forwarded-For parameter of the event
+													- src : match on the source parameter of the event
+													- dst : match on the destination parameter of the event
+													- host : match on the host parameter of the event (host field of URL)
+											</xs:documentation></xs:annotation>
+											<xs:simpleType>
+												<xs:restriction base="xs:token">
+													<xs:enumeration value="msg" >
+														<xs:annotation><xs:documentation>
+															Match on the message parameter of the event.
+														</xs:documentation></xs:annotation>
+													</xs:enumeration>
+													<xs:enumeration value="uri" >
+														<xs:annotation><xs:documentation>
+															Match on the uri parameter of the event.
+														</xs:documentation></xs:annotation>
+													</xs:enumeration>
+													<xs:enumeration value="xff" >
+														<xs:annotation><xs:documentation>
+															Match on the X-Forwarded-For parameter of the event.
+														</xs:documentation></xs:annotation>
+													</xs:enumeration>
+													<xs:enumeration value="src" >
+														<xs:annotation><xs:documentation>
+															Match on the source parameter of the event
+														</xs:documentation></xs:annotation>
+													</xs:enumeration>
+													<xs:enumeration value="dst" >
+														<xs:annotation><xs:documentation>
+															Match on the destination parameter of the event.
+														</xs:documentation></xs:annotation>
+													</xs:enumeration>
+													<xs:enumeration value="host" >
+														<xs:annotation><xs:documentation>
+															Match on the host parameter of the event (host field of URL).
+														</xs:documentation></xs:annotation>
+													</xs:enumeration>
+												</xs:restriction>
+											</xs:simpleType>
+										</xs:element>
+										<xs:element name="regex" minOccurs="0" type="regex-string">
+											<xs:annotation><xs:documentation>
+												Regular expression which, when applied to
+												the value associated with the key, determines whether or not to execute
+												the match rule behavior.
+
+												- Unique? Yes.
+												- Default value: none, value is not required, which can be useful for consolidate-unique applications
+												- Allowable values: any legal regular expression string
+											</xs:documentation></xs:annotation>
+										</xs:element>
+										<xs:element name="publish" minOccurs="0" type="xs:boolean">
+											<xs:annotation><xs:documentation>
+												If the match rule succeeds, this can
+												override the parent or preceding publish rule (in case multiple match
+												rules are defined).
+
+												- Unique? Yes.
+												- Default value: true
+												- Allowable values:
+												- true : generated event matching id(s) will be published if match rule succeeds
+												- false : generated events matching id(s) will not be published if match rule succeeds
+											</xs:documentation></xs:annotation>
+										</xs:element>
+										<xs:element name="frequency" minOccurs="0" type="xs:nonNegativeInteger">
+											<xs:annotation><xs:documentation>
+												If the match rule succeeds, this will
+												override the frequency of the parent/preceding rule. This can be used,
+												for example, to always publish an event instantly for events whose
+												key=xff and value=(some.bad.ip), or vice versa for a trusted source.
+
+												- Unique? Yes.
+												- Default value: 0
+												- Allowable values:
+												- 0 : generated event will be instantly published when generated
+												- 1+ : generated will be published every (value) seconds, as long as the event occurs at least once.
+											</xs:documentation></xs:annotation>
+										</xs:element>
+										<xs:element name="threshold" minOccurs="0" type="xs:positiveInteger">
+											<xs:annotation><xs:documentation>
+												If the match rule succeeds, and the
+												threshold of the match block is greater than zero, this overrides
+												the threshold value for reporting this event.
+
+												- Unique? Yes.
+												- Default value: 1
+												- Allowable values: 1+ : event count threshold for reporting
+											</xs:documentation></xs:annotation>
+										</xs:element>
+										<xs:element name="consolidate-unique" minOccurs="0" type="xs:boolean">
+											<xs:annotation><xs:documentation>
+												If the match rule is satisfies, and
+												frequency is greater than zero, this controls whether or not to group
+												reports by the value of the key field. For example, if you want a count
+												of the number of events every minute of a particular type reported
+												against different IP addresses, set key=src, frequency=60, and
+												consolidate-unique=true
+
+												- Unique? Yes.
+												- Default value: false
+												- Allowable values:
+												- true : group deferred event accounting by the field values specified by the key.
+												- false : default behavior
+											</xs:documentation></xs:annotation>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+			<xs:attribute name="dynamic-change-safe" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+	</xs:element>
+	<!-- device: end! -->
+
+	<!-- cluster -->
+	<xs:element name="tal-rest-api">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				(Internal, Shape only)
+
+				The tal-rest-api provide methods to access HINT states and operations through REST API. This section
+				configures the method urls and their access control.
+
+				[Function Spec](https://docs.google.com/a/intrafile.com/document/d/1KgsikBgrxhG7EsSDB5tfe4YHa2IbdG55nSD9TYmDM2Y/edit).
+
+				Notes:
+
+				1.	To avoid potential conflict with customer website paths, the prefix of the hint rest api will
+				be configurable via policy.	Throughout the document $HINT is used to denote the path prefix,
+				by default the value is "hint".
+				2.	All REST api methods can only be invoked from localhost or ip addresses white listed via policy.
+				The whitelist will also specify, per ip, what access is allowed (e.g. query, modification, or both).
+				3.	Since both the network component and the tal component need to know what urls represent rest api urls,
+				policy will also provide a list of all valid rest urls and the class name that implements the handler
+				within the tal layer.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="path" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Specifies the url prefix for the rest api (e.g. http://localhost/PATH_PREFIX/v1/config/policy).
+						Default value is "hint". This prefix is used to avoid potential conflict with customer website
+						paths.
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:attribute name="prefix" type="path-str" />
+						<xs:attribute name="firmware-only" type="xs:boolean" fixed="true"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="whitelist" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						IP addresses that are allowed to invoke the rest api must be listed in the whitelist.
+
+						All REST API methods can only be invoked from localhost or ip addresses white listed via policy.
+						The whitelist also specifies, per ip, what access is allowed (e.g. query, modification, or both).
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="addr" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="ip" type="ipv4-address" use="required">
+										<xs:annotation><xs:documentation>
+											An IP allowed to invoke REST API's.
+										</xs:documentation></xs:annotation>
+									</xs:attribute>
+									<xs:attribute name="allow-query" type="xs:boolean" default="true">
+										<xs:annotation><xs:documentation>
+											Determines if the listed IP is allowed to invoke Query API's (API's that
+											do not alter the operation of the ShapeShifter).
+
+											- Default value: true
+										</xs:documentation></xs:annotation>
+									</xs:attribute>
+									<xs:attribute name="allow-command" type="xs:boolean" default="false">
+										<xs:annotation><xs:documentation>
+											Determines if the listed IP is allowed to invoke Command API's (API's that
+											can alter the operation of the ShapeShifter).
+
+											- Default value: false
+										</xs:documentation></xs:annotation>
+									</xs:attribute>
+									<xs:attribute name="array-obj" type="xs:boolean" fixed="true" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="apis" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Container for defined REST API's.
+						This can only be specified in default.xml
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="api" maxOccurs="unbounded">
+								<xs:annotation><xs:documentation>
+									Define a REST API.
+								</xs:documentation></xs:annotation>
+								<xs:complexType>
+									<xs:sequence>
+										<xs:choice>
+											<xs:element name="path" type="path-str">
+												<xs:annotation><xs:documentation>
+													The path for the API (not including the path prefix).
+												</xs:documentation></xs:annotation>
+											</xs:element>
+											<xs:element name="header">
+												<xs:annotation><xs:documentation>
+													For special API's that are not triggered by path, they are invoked
+													based on setting a defined http header to a defined value.
+
+													Eg. header target="host" value-match="shape.shifter.alive"
+												</xs:documentation></xs:annotation>
+												<xs:complexType>
+													<xs:attribute name="target" type="non-empty-string">
+														<xs:annotation><xs:documentation>
+															An http header to be checked.
+														</xs:documentation></xs:annotation>
+													</xs:attribute>
+													<xs:attribute name="value-match" type="non-empty-string">
+														<xs:annotation><xs:documentation>
+															A string to match the http header content.
+														</xs:documentation></xs:annotation>
+													</xs:attribute>
+												</xs:complexType>
+											</xs:element>
+										</xs:choice>
+									</xs:sequence>
+									<xs:attribute name="command" type="xs:boolean" default="false">
+										<xs:annotation><xs:documentation>
+											Indicates the api is a command, otherwise it is a query.
+										</xs:documentation></xs:annotation>
+									</xs:attribute>
+									<xs:attribute name="respond-when-inactive" type="xs:boolean" default="false">
+										<xs:annotation><xs:documentation>
+											Determines if the api can be invoked when the SSE is in inactive or passthrough mode.
+										</xs:documentation></xs:annotation>
+									</xs:attribute>
+									<xs:attribute name="class" type="non-empty-string" use="required">
+										<xs:annotation><xs:documentation>
+											Name of the HINT internal implementation class.
+										</xs:documentation></xs:annotation>
+									</xs:attribute>
+									<xs:attribute name="ignore-whitelist" type="xs:boolean" default="false">
+										<xs:annotation><xs:documentation>
+											Allows an api to be invoked without filtering via the whitelist.
+										</xs:documentation></xs:annotation>
+									</xs:attribute>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+						<xs:attribute name="firmware-only" type="xs:boolean" fixed="true"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="network">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation source="http://confluence.shape/display/ICBM/Network+Configuration%3A+HintNetwork.xml">
+				Settings for the network connectivity and packet flow between ShapeShifter and the customer network environment, especially to interact with Load Balancer.
+				See [HINT Network Configuration](http://confluence.shape/display/ICBM/Network+Configuration%3A+HintNetwork.xml) for application note and samples.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="prevent-route-loop" minOccurs="0" type="xs:boolean" default="false">
+					<xs:annotation>
+						<xs:documentation source="http://confluence.shape/display/ICBM/Network+Configuration%3A+HintNetwork.xml">
+							Enable code which attempts to detect and block traffic routing loops (inner/outer VIP with
+							same IP, for example).
+
+							Note, this should be disabled for installations that intentionally
+							have the inner and outer VIPs sharing an IP (and route traffic based on VLAN or source IP/MAC).
+						</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="LB" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Specify the settings needed to access the associated load balancer.
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:all>
+							<xs:element name="productid" default="generic">
+								<xs:annotation><xs:documentation>
+									Text identifying which product is serving as the LB device.
+
+									- Default value: generic
+									- Allowable values:
+									- F5bigip : identifies this LB as an F5 Big-IP load balancer; Device can be physical or virtual device (VM)
+									- generic : a non-interactive generic load balancer identifier; The only output will be to the &lt;cfgFile&gt;
+								</xs:documentation></xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:token">
+										<xs:enumeration value="F5bigip">
+											<xs:annotation><xs:documentation>
+												Identifies this LB as an F5 Big-IP load balancer. Device can be physical or virtual device (VM).
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="generic">
+											<xs:annotation><xs:documentation>
+												A non-interactive generic load balancer identifier. The only output will be to the &lt;cfgFile&gt;.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element name="hostname" minOccurs="0" type="strlen-max-1000" default="default">
+								<xs:annotation><xs:documentation>
+									IP or hostname of the load balancer.
+
+									- Allowable values:
+									- a.b.c.d : IPv4 well formed IP address of the load balancer
+									- {hostname} : hostname (resolved by name server) of the load balancer
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="username" minOccurs="0" type="non-empty-string" default="admin">
+								<xs:annotation><xs:documentation>
+									User name needed to log in to the LB device.
+
+									- Default value: admin
+									- Allowable values: any non empty string
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="password" minOccurs="0" type="non-empty-string" default="admin">
+								<xs:annotation><xs:documentation>
+									Password of user needed to log in to the LB device.
+									(note: clear text password in v1.0)
+
+									- Default value: admin
+									- Allowable values: any non empty string
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="interaction" minOccurs="0" default="silent">
+								<xs:annotation><xs:documentation>
+									Controls how the HINT attempts to interact with the LB device.
+
+									- Default value: silent
+									- Allowable values:
+									- silent : HINT will not attempt to connect to the LB device
+									- verify : HINT will connect to the LB device and will use the remote programmatic
+									interface to verify that the LB device configuration matches the
+									HINT network configuration
+									- modify : HINT will connect to the LB device using the remote programmatic
+									interface and attempt to configure the device to match the
+									HINT network configuration
+									- auto: same as modify, and overrides &lt;config&gt; and &lt;discover&gt; settings
+									for subobjects to allow for minimal user configuration (hidden option
+									in current version of HINT)
+								</xs:documentation></xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:token">
+										<xs:enumeration value="silent" >
+											<xs:annotation><xs:documentation>
+												HINT will not attempt to connect to the LB device.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="verify" >
+											<xs:annotation><xs:documentation>
+												HINT will connect to the LB device and will use the remote programmatic
+												interface to verify that the LB device configuration matches the
+												HINT network configuration.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="modify" >
+											<xs:annotation><xs:documentation>
+												HINT will connect to the LB device using the remote programmatic
+												interface and attempt to configure the device to match the
+												HINT network configuration.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="auto" >
+											<xs:annotation><xs:documentation>
+												(hidden option in current version of HINT)
+												Same as modify, and overrides &lt;config&gt; and &lt;discover&gt;
+												settings for subobjects to allow for minimal user configuration.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element name="config" minOccurs="0" type="lb-privilege-config" default="query">
+								<xs:annotation><xs:documentation>
+									Determines write privileges for LB device (has no effect at this level).
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="discover" minOccurs="0" type="xs:boolean" default="false">
+								<xs:annotation><xs:documentation>
+									Attempts to determine configuration of named object,
+									at LB level will attempt recursive discovery where possible.
+
+									- Default value: false
+									- Allowable values:
+									- true : attempt auto configuration discovery
+									- false : do not attempt auto discovery
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="hostMonitor" minOccurs="0" type="strlen-max-1000" default="icmp">
+								<xs:annotation><xs:documentation>
+									Default monitor for configured hosts.
+
+									- Default value: icmp
+									- Allowable values: depends on device type, but for F5bigIP:
+									- none : no probe configured by default
+									- icmp : see F5 documentation
+									- gateway_icmp :
+									- tcp_echo :
+									- real_server :
+									- snmp_dca :
+									- https_443 :
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="poolMonitor" minOccurs="0" type="strlen-max-1000" default="gateway_icmp">
+								<xs:annotation><xs:documentation>
+									Default monitor for configured pools.
+
+									- Default value: gateway_icmp
+									- Allowable values: depends on device type, but for F5bigIP:
+									- none : no monitor configured by default
+									- gateway_icmp : see F5 documentation
+									- tcp :
+									- tcp_half_open :
+									- udp :
+									- http :
+									- https :
+									- https_443 :
+									- inband :
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="cfgFile" minOccurs="0" type="path-str" default="/dev/null">
+								<xs:annotation><xs:documentation>
+									Output file with CLI configuration needed for manual
+									configuration of LB device.
+
+									- Default value: /dev/null, not saving the generated file.
+									- Allowable values: Any legal full path to a creatable and writable file.
+								</xs:documentation></xs:annotation>
+							</xs:element>
+						</xs:all>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="hintpool" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Purpose: specifies behavior of the array of HINT devices,
+						as handled by the LB device.
+
+						- Unique? Yes
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="name" minOccurs="0" type="strlen-max-1000">
+								<xs:annotation><xs:documentation>
+									Symbolic name in the LB device of the HINT array.
+									Must be unique among network hintpool configurations.
+
+									- Default value: none
+									- Allowable values: any non empty string
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="config" minOccurs="0" type="strlen-max-1000" default="query">
+								<xs:annotation><xs:documentation>
+									Determines write privileges for LB config of host element.
+
+									- Default value: query
+									- Allowable values:
+									- none : use configured values for this component (same as silent, but confined to this component)
+									- query : read only access
+									- modify : allows object level changes to be made by the remote programming API
+									- create : allows modify level access, but also allows identified element to be
+									automatically created on startup and deleted on shutdown
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="discover" minOccurs="0" type="xs:boolean" default="false">
+								<xs:annotation><xs:documentation>
+									Attempts to determine configuration of named object.
+
+									- Default value: false
+									- Allowable values:
+									- true : attempt auto configuration discovery
+									- false : do not attempt auto discovery
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="quorum" minOccurs="0" type="nn-int-max-1000" default="0">
+								<xs:annotation><xs:documentation>
+									Count of probes that need to succeed to count HINT
+									as available to receive traffic.
+
+									- Default: 0
+									- Allowable values :
+									- 0 : all monitors must succeed
+									- 1-10: count of monitors that must succeed
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="monitor" maxOccurs="unbounded" minOccurs="0" default="gateway_icmp">
+								<xs:annotation><xs:documentation>
+									Adds monitor for configured pools.
+
+									- Unique? No. Multiple monitors may be specified
+									- Default value: as specified by LB:poolmonitor setting
+									- Allowable values: depends on device type, but for F5bigIP:
+									- none : no monitor configured by default
+									- gateway_icmp : see F5 documentation
+									- tcp :
+									- tcp_half_open :
+									- udp :
+									- http :
+									- https :
+									- https_443 :
+									- inband :
+									- any non empty string : custom monitor, must be defined elsewhere
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="lbmethod" minOccurs="0" type="strlen-max-1000" default="round_robin">
+								<xs:annotation><xs:documentation>
+									Sets Load Balancing method used for pool.
+
+									- Unique? Yes
+									- Default value: round_robin
+									- Allowable values: depends on device type, but for F5bigIP:
+									- round_robin : see F5 documentation
+									- ratio :
+									- least_conn :
+									- fastest :
+									- observed :
+									- predictive :
+									- dynamic_ratio :
+									- weighted_least_conn :
+									- ratio_least_conn :
+									- ratio_member :
+									- least_conn_member :
+									- observed_member :
+									- predictive_member :
+									- dynamic_ratio_member :
+									- ratio_least_conn_member :
+									- weighted_least_conn_member :
+									- fastest_app_response :
+									- least_sessions :
+									- l3_addr :
+									- ratio_session :
+								</xs:documentation></xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="serverpool" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Purpose: Server pool used to access customer content servers.
+
+						This pool is not generally configured, but needs to be specified so that the inner vserver
+						can be correctly configured.
+
+						- Unique? Yes (v1.0)
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:all>
+							<xs:element name="name" type="non-empty-string">
+								<xs:annotation><xs:documentation>
+									Symbolic name in the LB device of the server pool,
+									which contains the servers which serve the customer content.
+									Must be unique among network serverpool configurations.
+
+									- Default value: none
+									- Allowable values: any non empty string
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="config" minOccurs="0" type="lb-privilege-config" default="query">
+								<xs:annotation><xs:documentation>
+									Determines write privileges for LB config of
+									serverpool element. This should only be set to query.
+
+									- Default value: query
+									- Allowable values:
+										- none : use configured values for this component (same as silent, but confined
+												 to this component)
+										- query : read only access
+										- modify : allows object level changes to be made by the remote programming API
+										- create : allows modify level access, but also allows identified element to be
+												 automatically created on startup and deleted on shutdown
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="discover" minOccurs="0" type="xs:boolean" default="false">
+								<xs:annotation><xs:documentation>
+									Attempts to determine configuration of named object.
+
+									- Default value: false
+									- Allowable values:
+									- true : attempt auto configuration discovery
+									- false : do not attempt auto discovery
+								</xs:documentation></xs:annotation>
+							</xs:element>
+						</xs:all>
+					</xs:complexType>
+				</xs:element>
+				<xs:choice maxOccurs="unbounded">
+					<xs:element name="hint" maxOccurs="unbounded" minOccurs="0">
+						<xs:annotation><xs:documentation>
+							Purpose: Identifies HINT device(s) in the HINT pool of the LB device.
+
+							- Unique? No. However, only one HINT device should be flagged as local.
+						</xs:documentation></xs:annotation>
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="name" minOccurs="0" type="strlen-max-1000">
+									<xs:annotation><xs:documentation>
+										Symbolic name in the LB device of the HINT device.
+										Must be unique among network hint configurations.
+
+										- Default value: none
+										- Allowable values: any non empty string
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="hostname" minOccurs="0" type="strlen-max-1000">
+									<xs:annotation><xs:documentation>
+										Hostname of HINT.
+
+										- Default: none
+										- Allowable values : any non empty string
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="ipaddr" minOccurs="0" type="strlen-max-100">
+									<xs:annotation><xs:documentation>
+										IP address of HINT (note: can be auto-discovered
+										or verified if &lt;local&gt; is true.)
+
+										- Default: none
+										- Allowable values : a.b.c.d : well formed IPv4 address
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="port" minOccurs="0" type="ss-port" default="80">
+									<xs:annotation><xs:documentation>
+										Port monitored by HINT device.
+
+										- Default: 80 (note: may be learned from HintConfig.xml if unspecified)
+										- Allowable values : 1-65535 : port monitored by HINT.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="local" minOccurs="0" type="xs:boolean" default="true">
+									<xs:annotation><xs:documentation>
+										Identifies this HINT as the local machine.
+
+										- Default: true
+										- Allowable values :
+										- true : this HINT is the local machine
+										- false : this HINT is another instance running in the same array
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="config" minOccurs="0" type="lb-privilege-config" default="query">
+									<xs:annotation><xs:documentation>
+										Determines write privileges for LB config of host element.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="discover" minOccurs="0" type="xs:boolean" default="false">
+									<xs:annotation><xs:documentation>
+										Attempts to determine configuration of named object.
+
+										- Default value: false
+										- Allowable values:
+										- true : attempt auto configuration discovery
+										- false : do not attempt auto discovery
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="quorum" minOccurs="0" type="nn-int-max-1000" default="0">
+									<xs:annotation><xs:documentation>
+										Count of probes that need to succeed to count HINT
+										as available to receive traffic.
+
+										- Default: 0
+										- Allowable values :
+										- 0 : all monitors must succeed
+										- 1-10: count of monitors that must succeed
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="monitor" maxOccurs="unbounded" minOccurs="0" default="icmp">
+									<xs:annotation><xs:documentation>
+										Adds probe specification to determine responsiveness of the HINT device.
+
+										- Unique? No. Multiple monitors may be specified
+										- Default: as specified by &lt;LB&gt; : &lt;hostmonitor&gt;
+										- Allowable values: depends on device type, but for F5bigIP:
+										- none : no probe configured by default
+										- icmp : see F5 documentation
+										- gateway_icmp :
+										- tcp_echo :
+										- real_server :
+										- snmp_dca :
+										- https_443 :
+										- any non empty string : custom monitor, must be defined elsewhere
+									</xs:documentation></xs:annotation>
+								</xs:element>
+							</xs:sequence>
+							<xs:attribute name="override" type="xs:boolean" fixed="true" />
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="outervip" maxOccurs="unbounded" minOccurs="0">
+						<xs:annotation><xs:documentation>
+							Purpose: The "outer" vserver which is used by external visitors
+							to reach the content fronted by the LB device. There can be multiple outervip entities, one
+							for each port served (http and https, for example), and possibly for multiple IP addresses,
+							or an IP address range.
+
+							- Unique? No
+						</xs:documentation></xs:annotation>
+						<xs:complexType>
+							<xs:all>
+								<xs:element name="name" minOccurs="0" type="strlen-max-1000">
+									<xs:annotation><xs:documentation>
+										Symbolic name in the LB device of the vserver used
+										by the outside world to reach the HINT array and/or the server farm.
+										Must be unique among network outervip configurations.
+
+										- Default value: none
+										- Allowable values: any unique non empty string
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="ipaddr" minOccurs="0" type="strlen-max-100">
+									<xs:annotation><xs:documentation>
+										IP address of external VIP.
+
+										- Default: none (only mandatory if &lt;config&gt; is set to create)
+										- Allowable values : a.b.c.d : well formed IPv4 address
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="port" minOccurs="0" type="ss-port" default="80">
+									<xs:annotation><xs:documentation>
+										Port monitored by LB device.
+
+										- Default: 80
+										- Allowable values : 1-65535 : port monitored by LB device.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="vlan" minOccurs="0" type="ss-vlan" default="0">
+									<xs:annotation><xs:documentation>
+										Vlan used by outervip.
+
+										- Default: none
+										- Allowable values :
+										- 0 : all VLANs.
+										- 1-4095 : specified vlan (for F5, VLAN must be named to match)
+										- none : all VLANs
+										- non empty, non numerical string : symbolic name for VLAN
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="persist" minOccurs="0" type="strlen-max-1000" default="cookie">
+									<xs:annotation><xs:documentation>
+										Persistence (aka "sticky") mechanism employed by vserver.
+
+										- Default: cookie
+										- Allowable values :
+										- none : persistence disabled.
+										- cookie : employ "cookie sticky" persistence.
+										- source_addr : employ source address persistence.
+										- dest_addr : employ destination address persistence.
+										- hash : employ IP/port address hash persistence.
+										- other non-empty string : other persistence mechanisms (see F5 documentation)
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="profile" minOccurs="0" type="strlen-max-1000" default="http">
+									<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="config" minOccurs="0" type="lb-privilege-config" default="query">
+									<xs:annotation><xs:documentation>
+										Determines write privileges for LB config of outer vserver element.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="discover" minOccurs="0" type="xs:boolean" default="false">
+									<xs:annotation><xs:documentation>
+										Attempts to determine configuration of named object.
+
+										- Default value: false
+										- Allowable values:
+										- true : attempt auto configuration discovery
+										- false : do not attempt auto discovery
+									</xs:documentation></xs:annotation>
+								</xs:element>
+							</xs:all>
+							<xs:attribute name="override" type="xs:boolean" fixed="true" />
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="nexthop" maxOccurs="unbounded" minOccurs="0">
+						<xs:annotation><xs:documentation>
+							Purpose: Refers to the "inner" vserver, used by the HINT array
+							to reach the serverfarm in the LB device. This is a "new" vserver which needs to be
+							programmed into the LB device to properly route HINT-Server traffic.
+
+							- Unique? No
+						</xs:documentation></xs:annotation>
+						<xs:complexType>
+							<xs:all>
+								<xs:element name="name" minOccurs="0" type="strlen-max-1000" default="default_next_hop">
+									<xs:annotation><xs:documentation>
+										Symbolic name in the LB device of the vserver used
+										by the HINT array to reach the server farm.
+										Must be unique among network nexthop configurations.
+
+										- Default value: default_next_hop
+										- Allowable values: any unique non empty string
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="ipaddr" type="strlen-max-100" default="dns_lookup_result">
+									<xs:annotation><xs:documentation>
+										IP address of VIP used by HINT array to reach the Server Pool.
+
+										- Default: dns_lookup_result
+										- Allowable values :
+										- dns_lookup_result : use the result of a dns lookup from the host field of the url to determine the destination IP address.
+										- a.b.c.d : well formed IPv4 address
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="port" type="ss-port" default="80">
+									<xs:annotation><xs:documentation>
+										Port monitored by HINT device.
+
+										- Default: 80 (note: may be learned from HintConfig.xml if unspecified)
+										- Allowable values : 1-65535 : port monitored by HINT.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="vlan" minOccurs="0" type="ss-vlan" default="0">
+									<xs:annotation><xs:documentation>
+										Vlan used by outervip.
+
+										- Default: none
+										- Allowable values :
+										- 0 : all VLANs.
+										- 1-4095 : specified vlan (for F5, VLAN must be named to match)
+										none : all VLANs
+										non empty, non numerical string : symbolic name for VLAN
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="persist" minOccurs="0" type="strlen-max-1000" default="cookie">
+									<xs:annotation><xs:documentation>
+										Persistence (aka "sticky") mechanism employed by vserver.
+
+										- Default: cookie
+										- Allowable values :
+											- none : persistence disabled.
+											- cookie : employ "cookie sticky" persistence.
+											- source_addr : employ source address persistence.
+											- dest_addr : employ destination address persistence.
+											- hash : employ IP/port address hash persistence.
+											- other non-empty string : other persistence mechanisms (see F5 documentation)
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="profile" minOccurs="0" type="strlen-max-1000" default="http">
+									<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="default" minOccurs="0" type="xs:boolean" default="false">
+									<xs:annotation><xs:documentation>
+										Identifies the nexthop as eligible of processing
+										all otherwise unclassified forward traffic (other than internet bound traffic).
+										Generally used in small deployments where there's only one or two inner vips.
+
+										- Default value: false
+										- Allowable values:
+											- true: This inner vip can handle all otherwise unclassified traffic
+											- false : Traffic sent to this inner vip MUST match the policy/traffic-rule configuration
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="config" minOccurs="0" type="lb-privilege-config" default="query">
+									<xs:annotation><xs:documentation>
+										Determines write privileges for LB config of inner vserver element
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="discover" minOccurs="0" type="xs:boolean" default="false">
+									<xs:annotation><xs:documentation>
+										Attempts to determine configuration of named object.
+
+										- Default value: false
+										- Allowable values:
+										- true : attempt auto configuration discovery
+										- false : do not attempt auto discovery
+									</xs:documentation></xs:annotation>
+								</xs:element>
+							</xs:all>
+							<xs:attribute name="override" type="xs:boolean" fixed="true" />
+						</xs:complexType>
+					</xs:element>
+					<xs:element name="service" maxOccurs="unbounded" minOccurs="0">
+						<xs:annotation><xs:documentation>
+							Purpose: Associate outer and inner VIPs, linking them together through the host field of the URL.
+							This is also used to generate the traffic rule used by the Load Balancer to conditionally direct traffic to the Hint Array.
+							The rule body is derived from the HintPolicy.xml configuration.
+							Hostmatch matches are evaluated in the order that the services are listed in network/service
+							configuration, or increasing order specified by the priority field.
+							A request will match a service only if both hostmatch and hintport values for the request match the service in question.
+							Service name is used to identify the service, must be supplied, and must be unique among all defined service objects.
+							Unique? No
+						</xs:documentation></xs:annotation>
+						<xs:complexType>
+							<xs:sequence>
+								<xs:element name="name" type="strlen-max-1000" default="default_hint_service">
+									<xs:annotation><xs:documentation>
+										Symbolic name of the service. Must be unique among network service configurations.
+
+										- Default value: default_hint_service
+										- Allowable values: any unique non empty string
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="rulename" minOccurs="0" type="strlen-max-1000" default="hint_default_rule">
+									<xs:annotation><xs:documentation>
+										Symbolic name of the traffic rule in the LB device.
+
+										- Default value: (uses service name)
+										- Allowable values: any non empty string
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="policy" minOccurs="0" type="strlen-max-1000" default="all">
+									<xs:annotation><xs:documentation>
+										HINT Policy used to generate the TrafficRule contents.
+
+										- Default: all
+										- Allowable values :
+											- all : uses all Policies to generate one all-encompassing rule.
+											- non-empty string : identifies HINT policy. (TBD)
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="outervip" minOccurs="0" type="strlen-max-1000" default="all">
+									<xs:annotation><xs:documentation>
+										Outer VIP associated with this traffic rule.
+
+										- Default: all
+										- Allowable values :
+										- all : traffic rule is associated with all VIPs
+										- outervip name : Vserver which uses this traffic rule to direct traffic.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="nexthop" minOccurs="0" type="strlen-max-1000" default="default_next_hop">
+									<xs:annotation><xs:documentation>
+										Inner VIP this traffic should be forwarded to.
+
+										- Default: default_next_hop
+										- Allowable values :
+										- default : traffic is forwarded to the default VIP.
+										- nexthop name : Vserver which should receive the forwarded traffic.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="priority" minOccurs="0" type="nn-int-max-1000">
+									<xs:annotation><xs:documentation>
+										Relative evaluation priority of the hostregex.
+
+										- Default value: creation sequence ID
+										- Allowable values: any integer
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="config" minOccurs="0" type="lb-privilege-config" default="query">
+									<xs:annotation><xs:documentation>
+										Determines write privileges for LB config of traffic rule element.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="default" minOccurs="0" type="xs:boolean" default="false">
+									<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="discover" minOccurs="0" type="xs:boolean" default="false">
+									<xs:annotation><xs:documentation>
+										Attempts to determine configuration of traffic rule element.
+
+										- Default value: false
+										- Allowable values:
+										- true : attempt auto configuration discovery
+										- false : do not attempt auto discovery
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="hintport" maxOccurs="unbounded" minOccurs="0" type="ss-port">
+									<xs:annotation><xs:documentation>
+										Port(s) monitored by HINT device (port forwarding from LB). Can specify no ports
+										(matches all ports), or 0 (also matches all ports), or any number of ports to be
+										matched with this Service. Note that this is the port where traffic is received
+										by the HINT software, not the port the traffic was sent to. Since port 80 is
+										remapped to port 8080, and 443 to 8443, by iptables, use 8080 and 8443 for this
+										field, not 80 and 443.
+
+										- Default: none
+										- Allowable values (0 or more) :
+											- null, 0 : match all ports
+											- 8080-8096, 8443-8456 : port monitored by HINT.
+									</xs:documentation></xs:annotation>
+								</xs:element>
+								<xs:element name="hostmatch" maxOccurs="unbounded" minOccurs="0" type="regex-string">
+									<xs:annotation><xs:documentation>
+										Match string for identifying a host, either a full
+										match (e.g. www.xyz.com) or a regular expression (e.g. .*.xyz.com) or "all".
+										Multiple hostmatch strings can be specified for each service.
+
+										- Default: all
+										- Allowable values (0 or more) :
+											- null, all : matches all incoming host fields.
+											- valid complete host field : exact match for host field
+											- valid regex string : matching host fields are associated with this rule
+												(will match start of string if complete host field was intended)
+									</xs:documentation></xs:annotation>
+								</xs:element>
+							</xs:sequence>
+							<xs:attribute name="override" type="xs:boolean" fixed="true" />
+						</xs:complexType>
+					</xs:element>
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+		<xs:unique name="serverpool-name-uniqueness">
+			<xs:selector xpath="serverpool" />
+			<xs:field xpath="name" />
+		</xs:unique>
+		<xs:unique name="hint-name-uniqueness">
+			<xs:selector xpath="hint" />
+			<xs:field xpath="name" />
+		</xs:unique>
+		<xs:unique name="outervip-name-uniqueness">
+			<xs:selector xpath="outervip" />
+			<xs:field xpath="name" />
+		</xs:unique>
+		<xs:unique name="nexthop-name-uniqueness">
+			<xs:selector xpath="nexthop" />
+			<xs:field xpath="name" />
+		</xs:unique>
+		<xs:unique name="service-name-uniqueness">
+			<xs:selector xpath="service" />
+			<xs:field xpath="name" />
+		</xs:unique>
+	</xs:element>
+
+	<xs:simpleType name="lb-privilege-config">
+		<xs:annotation><xs:documentation>
+			Determines write privileges for LB device.
+		</xs:documentation></xs:annotation>
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="none" >
+				<xs:annotation><xs:documentation>
+					Use configured values for this component (same as silent, but confined to this component).
+				</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="query" >
+				<xs:annotation><xs:documentation>
+					Read-Only access.
+				</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="modify" >
+				<xs:annotation><xs:documentation>
+					Allows object level changes to be made by the remote programming API.
+				</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="create" >
+				<xs:annotation><xs:documentation>
+					Allows modify level access, but also allows identified element to be
+					automatically created on startup and deleted on shutdown.
+				</xs:documentation></xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- end of network -->
+
+	<!-- SECURITY -->
+	<xs:element name="security">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				Purpose: Security and cryptography settings for HINT.
+
+				- Unique? Yes.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" maxOccurs="unbounded" ref="provider" />
+				<xs:element minOccurs="0" ref="transaction" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="provider">
+		<xs:annotation><xs:documentation>
+			Purpose: Cryptography settings for HINT.
+
+			- Unique? No. One provider entry for every key handled.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="key" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="id" use="required">
+				<xs:annotation><xs:documentation>
+					Identifies cryptographic family ID.
+
+					- Default value: RSA
+					- Allowable values: any valid cryptography family ID.
+					- TODO: is RSA the only option, doc says any crypto?
+				</xs:documentation></xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="RSA" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="preferred" type="xs:integer" default="1">
+				<xs:annotation><xs:documentation>
+					Identifies variation or version number of cryptographic family referenced.
+
+					- Default value: 1
+					- Allowable values: integer value indicating correct version number.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="key">
+		<xs:annotation><xs:documentation>
+			Purpose: Cryptographic key details.
+
+			- Unique? Yes. One key for each provider.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="crypto-algorithm">
+					<xs:annotation><xs:documentation>
+						Identifies cryptographic algorithm used.
+
+						- Default value: AES
+						- Allowable values: any valid cryptography algorithm name.
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:enumeration value="AES" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="crypto-mode">
+					<xs:annotation><xs:documentation>
+						Identifies cryptographic mode used.
+
+						- Default value: CCM
+						- Allowable values: any valid cryptography mode name.
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:enumeration value="CBC" />
+							<xs:enumeration value="CCM" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="session-length-s" type="session-length-type">
+					<xs:annotation><xs:documentation>
+						Time (in seconds) that a session can be open.
+
+						- Default value: 970
+						- Allowable values: any positive integer.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="key-length" type="pos-int-max-10000">
+					<xs:annotation><xs:documentation>
+						Size (in bytes) of the key.
+
+						- Default value: 32
+						- Allowable values: any positive integer.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="transaction">
+		<xs:annotation><xs:documentation>
+			Purpose: Transaction related security settings for HINT, aimed at preventing
+			reuse or transaction data to investigate HINT behavior, or deny compute resources from legitimate users.
+			Tracking is done by remembering the number of times that a particular transaction-ID, hint-ID, and
+			time-stamp is used (which should uniquely identify a particular crypto blob). Two settings are maximum time
+			drift (indicates how long a crypto blob can be used before it is out of date) and reuse-max, which is the
+			maximum number of crypto-blobs that we track. Crypto-blobs are used on posts (and gets) from protected
+			pages, but not when serving the anchor pages themselves. For sizing, the timeout should be set to a time
+			such that the maximum number of protected page submissions (set by reuse-tracker-size) won't be exceeded
+			by the product. For example, setting a timeout of 2 minutes and reuse-tracker-size of 12000 will handle a
+			submission rate of 100 pages per second.
+
+			- Unique? Yes.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="reuse-tracker-size" type="pos-int-max-100000">
+					<xs:annotation><xs:documentation>
+						Maximum number of crypto blob transaction IDs that are tracked.
+						Default value: 10000
+						Allowable values: any positive value.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="reuse-max" type="nn-int-max-100000">
+					<xs:annotation><xs:documentation>
+						Maximum number of times that a particular crypto blob will be
+						handled and processed. This number might legitimately be larger than 1 if Ajax calls result in
+						multiple submissions from the same anchor page. Note that each HINT tracks these blobs
+						independently, so it is possible for the same blob to be processed more than once if received
+						by different HINT instances.
+
+						- Default value: 20
+						- Allowable values:
+						- 0: transaction tracking disabled
+						- 1: a crypto blob will only be honored the first time that it is seen
+						- 2+: a crypto blob will be honored the number of times indicated, after which time,
+						subsequent uses of the same blob will be rejected.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="timing-threshold" type="nn-int-max-100000">
+					<xs:annotation><xs:documentation>
+						Maximum number of time (in milliseconds) that the timestamp of a crypto
+						blob can differ from the local HINT's time and still be honored. Note that time drift and time
+						zones are not accounted for in this model, so setting must be done appropriately (UTC is recommended).
+
+						- Default value: 90000
+						- Allowable values:
+						- 0: time delta tracking disabled
+						- 1+: a crypto blob will only be honored if the absolute value of the difference in blob time and
+						local time is less than or equal to this value (in seconds).
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- SECURITY: end! -->
+	<!-- BROWSER DATA -->
+	<xs:element name="browser-data">
+		<xs:annotation><xs:documentation>TODO, what is the general purpose of this config?</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="dedicated-channel" minOccurs="0" />
+				<xs:element ref="cache-limit" minOccurs="0" />
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="dedicated-channel">
+		<xs:annotation><xs:documentation>
+			Purpose: Setting related to Telemetry "out of band" communication between the browser and HINT.
+
+			- Unique? Yes.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="frequency-ms" type="pos-int-max-1000000">
+					<xs:annotation><xs:documentation>
+						Frequency (in milliseconds) that user telemetry is sent to hint
+						via the dedicated channel. Note that if a user is idle (generates no events), then no update
+						will be sent, an only the heartbeat will be sent.
+
+						- Default value: 5000 (5 seconds)
+						- Allowable values: any positive integer.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="heartbeat-interval-ms" type="pos-int-max-1000000">
+					<xs:annotation><xs:documentation>
+						Frequency (in milliseconds) that user telemetry is forced to be sent to hint via the dedicated
+						channel. This has no back-off and serves as a heartbeat.
+
+						- Default value: 30000 (30 seconds)
+						- Allowable values: any positive integer.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="max-payload-size" type="xs:positiveInteger">
+					<xs:annotation><xs:documentation>
+						Maximum size (in bytes) of data sent to HINT via the dedicated channel.
+
+						- Default value: 10485760 (1m)
+						- Allowable values: any positive integer.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="cache-limit">
+		<xs:annotation><xs:documentation>
+			Purpose: Settings for limits on browser event tracking cache.
+			With any telemetry post, only the most recent n events will be sent.
+
+			- Unique? Yes.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="mouse" type="pos-int-max-100000">
+					<xs:annotation><xs:documentation>
+						Number of mouse movement events that will be stored.
+
+						- Default value: 50
+						- Allowable values: 1-50
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="key" type="pos-int-max-100000">
+					<xs:annotation><xs:documentation>
+						Number of keypress events that will be stored.
+
+						- Default value: 50
+						- Allowable values: 1-50
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="click" type="pos-int-max-100000">
+					<xs:annotation><xs:documentation>
+						Number of mouse click events that will be stored.
+
+						- Default value: 5
+						- Allowable values: 1-10
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<!-- BROWSER DATA: end! -->
+
+	<!-- MONITOR -->
+	<xs:element name="monitor">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				Purpose: Settings for internal status monitor thread.
+
+				- Unique? Yes.
+				- TODO, is it still in-use for Vallejo?
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="status-message-interval" minOccurs="0" type="pos-int-max-1000">
+					<xs:annotation><xs:documentation>
+						Time interval (in seconds) between status updates sent to CnC.
+
+						- Default value: 60
+						- Allowable values: Any positive integer.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="health-check-interval" minOccurs="0" type="pos-int-max-1000">
+					<xs:annotation><xs:documentation>
+						Time interval (in tenths of seconds) between internal health checks. Reported delta intervals
+						will use this interval. e.g. 10 is per second, 600 is per minute.
+
+						- Default value: 10 (one second)
+						- Allowable values:
+						- 0: disable health checks
+						- 1+: health check interval (10ths of seconds)
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="health-check-timeout" minOccurs="0" type="pos-int-max-1000">
+					<xs:annotation><xs:documentation>
+						Count (in checks) which must transpire before blocked/unhealthy
+						(wedged) status warning is issued.
+
+						- Default value: 60 (one minute with default health-check-interval of 10)
+						- Allowable values:
+						- 0: disable wedge checks
+						- 1+: number of checks which must fail before status warning is issued
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="health-check-entropyfile" minOccurs="0" type="path-str">
+					<xs:annotation><xs:documentation>
+						File which is opened and checked to determine available entropy
+						(reported in bits). This is used to generate a "true" random number.
+
+						- Default value: /proc/sys/kernel/random/entropy_avail
+						- Allowable values: valid filename.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="gc-interval-idle" minOccurs="0" type="nn-int-max-10000">
+					<xs:annotation><xs:documentation>
+						Time (in seconds) that HINT must remain idle (receives no messages)
+						before triggering a manual java memory garbage collection.
+
+						- Default value: 600 (10 minutes)
+						- Allowable values: Any positive integer.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="gc-interval-delay" minOccurs="0" type="nn-int-max-10000">
+					<xs:annotation><xs:documentation>
+						Time (in seconds) that HINT must remain idle before gc idle calculation begins.
+
+						- Default value: 10 (10 seconds)
+						- Allowable values: Any non-negative integer.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="min-free-memory" minOccurs="0" type="xs:double">
+					<xs:annotation><xs:documentation>
+						Memory (either absolute, in megabytes, or as a fraction of
+						available system memory) which must be free. If specified amount of memory is not available,
+						a GC cycle will be triggered.
+
+						- Default value: 0.1 (10% of available memory)
+						- Allowable values:
+						- 0 : disable min-free-memory GC check
+						- 0.0 to 1.0 : fraction of memory, a lower amount of free memory will trigger GC
+						- 1+: Memory, in megabytes, that must be free, otherwise a GC will be triggered
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="min-free-heap" minOccurs="0" type="xs:double">
+					<xs:annotation><xs:documentation>
+						Heap (either absolute, in megabytes, or as a fraction heap
+						allocated to process) which must be free. If specified amount of memory is not available,
+						a GC cycle will be triggered.
+
+						- Default value: 0.1 (10% of allocated heap)
+						- Allowable values:
+						- 0 : disable min-free-heap GC check
+						- 0.0 to 1.0 : fraction of allocated heap, a lower amount of free memory will trigger GC
+						- 1+: Heap space, in megabytes, that must be free, otherwise a GC will be triggered
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="status-request-whitelist" minOccurs='0' />
+				<xs:element ref="ready-status" minOccurs='0' />
+			</xs:all>
+			<xs:attribute name="enabled" type="xs:boolean" default="true">
+				<xs:annotation><xs:documentation>
+					Indicates whether or not monitor thread is active.
+
+					- Default value: true
+					- Allowable values:
+					- true: monitor thread will run
+					- false: monitor thread will not run
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="status-request-whitelist">
+		<xs:annotation><xs:documentation>
+			Important: This is soon to be obsolete and only applies to the deprecated apis, not the new tal-rest-api.
+
+			List of whitelisted IPs from status-related requests (e.g. status, status-v, ready, etc..) are recognized by the Shape Shifter.
+
+			- It allows one or more addr elements.
+			- Value:	each addr represents an individual IP address.
+			- Default:	by default, localhost is in the whitelist
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="addr" minOccurs="1" maxOccurs="unbounded" type="ipv4-address" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ready-status">
+		<xs:annotation><xs:documentation>
+			Configures the url, the response and the graceful-start-period of the readiness
+			status of the Shape Shifter (see [ICBM-1856](http://jira.shape/browse/ICBM-1856)).
+
+			- It has three elements:	url, response, graceful-start-period
+			- Value:	url is an uri preceeding with "/", response can be an arbitrary string and graceful-start-period is time in seconds.
+			- Default:	by default, url=/ready, response=yes and graceful-start-period=0
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="url" type="strlen-max-1000" />
+				<xs:element name="response" type="strlen-max-100" />
+				<xs:element name="graceful-start-period" type="nn-int-max-100" />
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<!-- MONITOR: end -->
+
+	<!-- EXTERNAL CONTENT CACHE -->
+	<xs:element name="external-content-cache">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				Purpose: Settings for how ShapeShifter caches the external content, i.e. javascript and css pages.
+
+				With transform rule configuration, ShapeShifter may resolve specified js/css uri, transform the content
+				and inline embedded into the web page. ShapeShifter can cache the external content for better
+				performance, and this external-content-cache configures the enabling and the behavior of this caching.
+
+				- Unique? Yes.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="freshness-timeout" minOccurs="0" type="pos-int-max-10000">
+					<xs:annotation><xs:documentation>
+						If the origin server for a cacheable entry does not provide explicit expiration times or
+						validators a simple freshness heuristic is used.	This element defines the max age for such
+						resources after which they will be deemed stale.
+
+						- Optional.
+						- Permitted values: integer number of seconds.
+						- Default value: 10 minutes.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="config-params-apache-httpcache" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						(Hidden, for Shape only)
+
+						Parameters to tune the apache http cache implementation, for timeout and memory consumption.
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:all>
+							<xs:element name="max-number-of-entities" minOccurs='0' type="pos-int-max-10000" />
+							<xs:element name="max-bytes-per-entity" minOccurs='0' type="memory-amount" />
+							<xs:element name="connection-timeout" minOccurs='0' type="nn-int-max-10000" />
+							<xs:element name="socket-timeout" minOccurs='0' type="nn-int-max-10000" />
+						</xs:all>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="ecc-task-executor" minOccurs="0">
+					<xs:complexType>
+						<xs:all>
+							<xs:element name="num-core-threads" minOccurs='0' type="pos-int-max-1000" />
+							<xs:element name="num-max-threads" minOccurs='0' type="pos-int-max-1000" />
+							<xs:element name="thread-timeout" minOccurs='0' type="nn-int-max-10000" />
+							<xs:element name="task-queue-capacity" minOccurs='0' type="pos-int-max-1000000" />
+						</xs:all>
+					</xs:complexType>
+				</xs:element>
+			</xs:all>
+			<xs:attribute name="enabled" type="xs:boolean" default="true">
+				<xs:annotation><xs:documentation>
+					Determines if the cache is enabled.
+
+					- Optional.
+					- Permitted values: true or false.
+					- Default value: true.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<!-- EXTERNAL CONTENT CACHE: end! -->
+
+	<xs:element name="http-intermediate-cache">
+		<xs:annotation><xs:documentation>
+			This cache is an http intermediate cache as defined in the HTTP/1.1 specification. It is used to cache
+			pages from the customer server that we are transforming.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="initial-map-size" type="xs:positiveInteger" default="1000">
+					<xs:annotation><xs:documentation>
+						The implementation of the cache makes use of a HashMap. This element defines the initial size
+						of the map's key space. Provided to avoid the high cost of increasing the size of the key space
+						when it is getting full.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="max-cache-size">
+					<xs:annotation><xs:documentation>
+						The maximum size of the cache. It can be defined either by the maximum number of entries
+						or by memory usage. At the current time, entries should be preferred. The underlying cache uses
+						a pseudo LRU algorithm to determine which entries to flush when the cache is approaching the
+						size limit.
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:attribute name="entries" type="xs:positiveInteger" />
+						<xs:attribute name="memory" type="memory-amount" />
+					</xs:complexType>
+				</xs:element>
+			</xs:all>
+			<xs:attribute name="enabled" type="xs:boolean" default="true" />
+			<xs:attribute name="insert-diag-headers" type="xs:boolean" default="false">
+				<xs:annotation><xs:documentation>
+					Internal debugging feature. When set to true, transformed pages served to the browser will contain
+					a custom header which indicates if there was a cache hit or a cache miss.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- POLICY -->
+	<xs:element name="policy">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER</xs:appinfo>
+			<xs:documentation>
+				Policy controls how the HINT handles incoming HTTP/HTTPS requests.
+
+				With the policy configuration, the ShapeShifter can apply security transformation in a fine-grained fashion.
+				It can selectively choose what content to apply transformation, details what countermeasures to use, and
+				apply which transformation.
+
+				When an incoming form submission request is reverse transformed, the policy file also allows the ShapeShifter to
+				apply what action if malicious attacks are detected. In addition, the policy file provides controls which
+				aid debugging such as controlling logging, inserting comment into the transformed page, inserting HTTP headers
+				into the response coming back the browser. It also provides controls to make modification to request headers
+				before forwarding it to the server.
+
+				- The transform-rulebase provides rules for the content transformation of the pages that pass through HINT.
+				- The detection-rulebase provides rules for the reverse transformation process on form submission requests of
+				the forms that were transformed/protected by HINT.
+				- The header-rulebase provides rules to allow HINT to insert HTTP headers to the request (before forwarding
+				to the server) or to the response (before sending it back to the client/browser).
+
+				TODO purpose of the link-polymorphism-rulebase, global, telemetry.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="global" minOccurs="0" />
+				<xs:element ref="transform-rulebase" minOccurs="0" />
+				<xs:element ref="detection-rulebase" minOccurs="0" />
+				<xs:element ref="header-rulebase" minOccurs="0" />
+				<xs:element ref="link-polymorphism-rulebase" minOccurs="0" />
+				<xs:element name="telemetry" minOccurs="0" type="telemetry-reporting" />
+				<xs:element name="information-collection" type="information-collection" minOccurs="0" />
+			</xs:all>
+			<xs:attribute name="dynamic-change-safe" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+		<xs:key name="traffic-tag-ids">
+			<xs:selector xpath="global/references/traffic-tag-objects/traffic-tag-object" />
+			<xs:field xpath="@id" />
+		</xs:key>
+		<xs:keyref name="traffic-tag-ref" refer="traffic-tag-ids">
+			<xs:selector xpath="detection-rulebase/detection-rule/detect-action" />
+			<xs:field xpath="traffic-tag" />
+		</xs:keyref>
+		<xs:keyref name="whitelist-traffic-tag-ref" refer="traffic-tag-ids">
+			<xs:selector xpath="global/whitelist" />
+			<xs:field xpath="traffic-tag" />
+		</xs:keyref>
+		<xs:key name="attack-detection-actions-rule-ids">
+			<xs:selector xpath="global/references/attack-detection-actions-rules/attack-detection-actions-rule"/>
+			<xs:field xpath="@id"/>
+		</xs:key>
+		<xs:keyref name="attack-detection-actions-rule-ref" refer="attack-detection-actions-rule-ids">
+			<xs:selector xpath="detection-rulebase/detection-rule/detect-action/custom-rule"/>
+			<xs:field xpath="@ref"/>
+		</xs:keyref>
+	</xs:element>
+	<xs:element name="global">
+		<xs:annotation><xs:documentation>
+			The global section contains the rules that are applicable to all incoming requests.
+			As of now, within the global section, we can find the rules for IP whitelisting and IP blacklisting.
+
+			- TODO, what about others?
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="whitelist" minOccurs="0" type="ip-addresses">
+					<xs:annotation><xs:documentation>
+						If the incoming request has its IP (either the source IP or the XFF X-Forwarded-For IP) matches
+						the whitelisted IP list, all the usual ShapeShifter processing (content transformation,
+						reverse transformation and header modification) is bypassed.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="blacklist" minOccurs="0" type="ip-addresses">
+					<xs:annotation><xs:documentation>
+						For any incoming request, if its IP matches the a blacklisted Source IP or X-Forwarded-For IP, it is dropped.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="max-number-of-addrs-in-xff" minOccurs="0" type="xs:positiveInteger" default="1">
+					<xs:annotation><xs:documentation>
+						This configures the maximum number of IP addresses in the XFF header.
+
+						- When checking against the whitelist, if the actual number of IP address is greater than the configured value,
+						the request is not whitelisted.
+						- When checking against the	blacklist, if the actual number is greater than the configured value,
+							the request is blacklisted.
+						- Default: 1
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="default-detection-rule-enabled" minOccurs="0" type="xs:boolean" default="true">
+					<xs:annotation><xs:documentation>
+						If a detection-rule is not found for the incoming request, by default, the ShapeShifter
+						will only attempt to perform reverse transform if the request contains a secure token.
+						In the case this default behavior is not desired, this default-detection-rule-enabled
+						can disable it.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="stealth-mode-enabled" minOccurs="0" type="xs:boolean" default="false">
+					<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="latency-measurement" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						During the life cycle of each HTTP transaction, latency is measured at different levels.
+						Different levels can be configured to get more detailed latency breakdown.
+						Thresholds can be configured to generate event logs for transactions whose latency exceeds those thresholds.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="passive-bot-recognition" minOccurs="0">
+					<xs:annotation><xs:documentation>Global configurations for passive bot recognition</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="injected-javascript" minOccurs="0">
+					<xs:annotation><xs:documentation>Configuration for injected script</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element ref="defaults" minOccurs="0">
+					<xs:annotation><xs:documentation>Default Values</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="references" minOccurs="0">
+					<xs:annotation><xs:documentation>Predefined references</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="references">
+		<xs:annotation><xs:documentation>
+			Global definitions that can be referred by name from other configuration sections.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="attack-detection-actions-rules" minOccurs="0">
+					<xs:annotation><xs:documentation>Define reference objects of actions for detected attacks.</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="countermeasure-periods" minOccurs="0">
+					<xs:annotation><xs:documentation>Define reference objects of time/date periods.</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="traffic-tag-objects" minOccurs="0">
+					<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="match-conditions" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Define reference objects that specify the matching criteria to filter the http requests.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="replacement-map-references" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Define reference objects for replacement-map (used by ref-poly)
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="defaults">
+		<xs:annotation><xs:documentation>
+			Providing default values
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="attacks-actions" minOccurs="0">
+					<xs:annotation><xs:documentation>Default actions for detected attacks.</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	
+	<!-- Detect actions -->
+	<xs:element name="attack-detection-actions-rules">
+		<xs:annotation><xs:documentation>
+			Define the appropriate actions for the attacks the ShapeShifter detects.
+			It consists of one or more attack-detection-actions-rule elements, which can be referred by id name from a
+			detection-rule.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="attack-detection-actions-rule" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="attack-detection-actions-rule">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="attack-detection-action" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="id" type="strlen-max-1000" default="default" />
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="attacks-actions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="attack-detection-action" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+	</xs:element>
+	
+	<!-- detect actions: end -->
+	<xs:complexType name="ip-addresses">
+		<xs:all>
+			<xs:element name="src-ip-addresses" minOccurs="0" type="ipv4-addresses">
+				<xs:annotation><xs:documentation>
+					List of source IP addresses, specified as individual IPv4 address, subnet, or range.
+				</xs:documentation></xs:annotation>
+			</xs:element>
+			<xs:element name="xff-ip-addresses" minOccurs="0" type="ipv4-addresses">
+				<xs:annotation><xs:documentation>
+					List of X-Forwarded-For IP addresses, specified as individual IPv4 address, subnet, or range.
+				</xs:documentation></xs:annotation>
+			</xs:element>
+			<xs:element name="traffic-tag" minOccurs="0" type="xs:string">
+				<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+			</xs:element>
+		</xs:all>
+	</xs:complexType>
+
+	<xs:element name="injected-javascript">
+		<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="minify">
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="auto" />
+							<xs:enumeration value="true" />
+							<xs:enumeration value="false" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+
+				<xs:element name="rename-style" minOccurs="0">
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="short" />
+							<xs:enumeration value="random" />
+							<xs:enumeration value="none" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+
+				<xs:element name="transformer" minOccurs="0">
+					<xs:complexType>
+						<xs:all>
+							<xs:element name="cache-duration" type="xs:integer" />
+							<xs:element name="global-probability" type="double-range-0-1" />
+							<!--<xs:element name="enabled" type="xs:boolean" minOccurs="0"/>-->
+
+							<xs:element name="transforms" minOccurs="0">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="transform" minOccurs="0" maxOccurs="unbounded">
+											<xs:complexType>
+												<xs:attribute name="name" use="required">
+													<xs:simpleType>
+														<xs:restriction base="xs:token">
+															<xs:enumeration value="InjectDuplicate" />
+															<xs:enumeration value="inject-duplicate" />
+															<xs:enumeration value="LiftExpressions" />
+															<xs:enumeration value="lift-expressions" />
+															<xs:enumeration value="SubstituteNumbers" />
+															<xs:enumeration value="substitute-numbers" />
+															<xs:enumeration value="DecomposeLiterals" />
+															<xs:enumeration value="decompose-literals" />
+															<xs:enumeration value="InsertConditionals" />
+															<xs:enumeration value="insert-conditionals" />
+															<xs:enumeration value="Minify" />
+															<xs:enumeration value="minify" />
+															<xs:enumeration value="ExtractFunctions" />
+															<xs:enumeration value="extract-functions" />
+															<xs:enumeration value="IntersperseStatements" />
+															<xs:enumeration value="intersperse-statements" />
+															<xs:enumeration value="SubstituteKeywords" />
+															<xs:enumeration value="substitute-keywords" />
+															<xs:enumeration value="RenameVariables" />
+															<xs:enumeration value="rename-variables" />
+														</xs:restriction>
+													</xs:simpleType>
+												</xs:attribute>
+												<xs:attribute name="probability" type="double-range-0-1" use="optional" />
+												<xs:attribute name="enabled" type="xs:boolean" use="optional" default="true" />
+												<xs:attribute name="override" type="xs:boolean" fixed="true" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:all>
+						<xs:attribute name="enabled" type="xs:boolean" use="optional" default="false"/>
+					</xs:complexType>
+				</xs:element>
+
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="countermeasure-periods">
+		<xs:annotation><xs:documentation>
+			Time-based countermeasure can dynamically change the counter measures applied to a given URL, as time changes.
+			This introduce a kind of dynamic diversity (or randomness) in terms of the counter measures that are used to
+			protect an URL in HINT.
+
+			In countermeasure-periods, reference objects of time/date periods are defined. Each object can be a single
+			time period, or a group of time periods.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="countermeasure-single-period" minOccurs="0" maxOccurs="unbounded" />
+				<xs:element ref="countermeasure-group-period" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="countermeasure-single-period">
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="time-interval" minOccurs="1" maxOccurs="1">
+					<xs:annotation><xs:documentation>
+						Specifying a time interval when the associated countermeasure will be applied, namely, a time
+						period, and optionally how the time period recurs.
+
+						The time internal is specified in the format of HH:MM-HH:MM, with 24-hour clock and UTC time zone.
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:pattern value="([01]?\d|2[0-3]):[0-5]\d-([01]?\d|2[0-3]):[0-5]\d" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="date-interval" minOccurs="0" maxOccurs="1">
+					<xs:annotation><xs:documentation>
+						- Date Interval for multiple date range should be in the format: YYYY-MM-DD, YYYY-MM-DD
+						- Date Interval for single date should be in the format: YYYY-MM-DD
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:pattern
+									value="2\d{3}-([0]\d|1[0-2])-([012]\d|3[0-1])(, 2\d{3}-([0]\d|1[0-2])-([012]\d|3[0-1]))?" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="recurring-days" minOccurs="0" maxOccurs="1">
+					<xs:annotation><xs:documentation>
+						Recurring dates are defined as subsets of {everyday, monday, tuesday, wednesday, thursday, friday, saturday, sunday},
+						comma separated.
+						everyday means all of the days in a week
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:pattern
+									value="(([mM]onday|[tT]uesday|[wW]ednesday|[tT]hursday|[fF]riday|[sS]aturday|[sS]unday|[eE]veryday),( )*)*([mM]onday|[tT]uesday|[wW]ednesday|[tT]hursday|[fF]riday|[sS]aturday|[sS]unday|[eE]veryday)?" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+			</xs:all>
+			<xs:attribute name="id" type="strlen-max-1000" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="countermeasure-group-period">
+		<xs:annotation><xs:documentation>
+			Define a group-period, which contains multiple single period objects.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="member-period-object" minOccurs="1" maxOccurs="unbounded" type="strlen-max-1000" />
+			</xs:sequence>
+			<xs:attribute name="id" type="strlen-max-1000" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="apply-countermeasure-periods">
+		<xs:annotation><xs:documentation>
+			To apply a time period object (defined in countermeasure-periods) to the associated rule.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="apply-time-object" minOccurs="1" maxOccurs="unbounded">
+					<xs:annotation><xs:documentation>
+						Specify the id name of a countermeasure-periods object defined in the "references" section.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="traffic-tag-objects">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="traffic-tag-object" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="traffic-tag-object">
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="add" minOccurs="0" />
+			</xs:all>
+			<xs:attribute name="id" type="strlen-max-1000" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="replacement-map-references">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="replacement-map" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:complexContent>
+							<xs:extension base="replacement-map">
+								<xs:attribute name="id" type="non-empty-string" use="required" />
+							</xs:extension>
+						</xs:complexContent>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="match-conditions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="match-condition" maxOccurs="unbounded" type="match-condition-def" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="transform-rulebase">
+		<xs:annotation><xs:documentation>
+			A transform rule base is a collection of rules pertains to content transformation of the webpages going through HINT.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element ref="transform-rule" maxOccurs="unbounded">
+					<xs:annotation><xs:documentation>
+						A transform-rule specifies transformation rules of the page that it matches.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+		<xs:unique name="transform-rule-name-uniqueness">
+			<xs:selector xpath="transform-rule" />
+			<xs:field xpath="@rule-name" />
+		</xs:unique>
+	</xs:element>
+	<xs:element name="transform-rule">
+		<xs:annotation><xs:documentation>
+			A transform-rule specifies transformation rules of the page that it matches.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element name="match-condition" type="match-condition-ref">
+					<xs:annotation><xs:documentation>
+						Specify the matching criteria to filter the http requests that this transform-rule should be applied.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="service" minOccurs="0" type="strlen-max-1000">
+					<xs:annotation><xs:documentation>
+						- Specifies the associated service name defined in network/service section.
+						- Its value is either default (matches all) or the specific service name in network/service section.
+						- Example: hint_default_rule
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element ref="resource-load-failure-action" minOccurs="0" />
+				<xs:element name="debug-IP" minOccurs="0" type="xs:token">
+					<xs:annotation><xs:documentation>
+						(hidden, for Shape only)
+
+						Will insert an INFO level comment into the log for each connection originating from the specified IP address.
+						This can be used to filter the logfile for log output for transactions from the specified IP address.
+						This will attempt both a substring as well as a regex match. For example, 192.168.0.* and
+						192.168.0 will both match the subnet 192.168.0.0/24.
+
+						By default, this value is unset, and no output will appear in the log.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="debug-uri" minOccurs="0" type="strlen-max-1000">
+					<xs:annotation><xs:documentation>
+						(hidden, for Shape only)
+
+						Will insert an INFO level comment into the log for each connection with a URI path that matches the regex passed in.
+						This can be used to filter the logfile for log output for transactions to the specified URI.
+						This will attempt both a substring as well as a regex match against the path. Note that the host field is not checked.
+
+						By default, this value is unset, and no output will appear in the log.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="failed-document-action" minOccurs="0" type="error-action-type">
+					<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="strict-html-check" minOccurs="0" type="xs:boolean">
+					<xs:annotation><xs:documentation>
+						Enables strict HTML checking on the content received by the ShapeShifter.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="transform" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Configuration options for transform response outside forms.
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:sequence maxOccurs="unbounded">
+							<xs:element name="countermeasures" type="salt-rule">
+								<xs:annotation><xs:documentation>TODO, countermeasure details</xs:documentation></xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element ref="cache" minOccurs="0" />
+			</xs:all>
+			<xs:attribute name="rule-name" type="strlen-max-1000">
+				<xs:annotation><xs:documentation>
+					Symbolic name of this rule. Must be unique within transform-rulebase.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="enabled" type="xs:boolean" default="true">
+				<xs:annotation><xs:documentation>Specifies if this rule is enabled or disabled.</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="cache-vary-enum-type">
+		<xs:restriction base="xs:normalizedString">
+			<xs:enumeration value="X_SS_COOKIE_PRESENT" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:element name="cache">
+		<xs:annotation><xs:documentation>
+			This section modifies the operation of the http intermediate cache for urls matching the enclosing transform-rule.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="freshness-timeout" minOccurs="0" type="xs:integer">
+					<xs:annotation><xs:documentation>
+						Number of seconds before a page is considered stale when the freshness heuristic is relevant.
+						The freshness heuristic is only relevant when the origin server response contains no cache
+						related headers making it impossible to determine expiration and/or validity of the cache entry.
+
+						- Default value: 0
+						- set to value 0 to disable.
+						- When enabled, value must be set to greater than 2 minutes to avoid adverse performance impact on ShapeShifter.
+						- TODO, to restrict value 1 to 119.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="get-with-query-string-has-side-effects" minOccurs="0" type="xs:boolean" default="true">
+					<xs:annotation><xs:documentation>
+						The HTTP/1.1 specification for GET is that it should have no significant side effects (and thus
+						is safe to serve from cache).	However many applications have traditionally used GET requests
+						with query strings to perform operations with significant side effects and such pages are not
+						safe cached with normal HTTP intermediate caches.	The ShapeShifter operates correctly even
+						though it caches all GET requests, however to do so it know which ones have side effects.
+						The default value is true for safety, but performance will be improved by setting it to false
+						if get requests with query strings do not have side effects.
+
+						Specifically, this setting relates to state side effects in the customer's backend (e.g.
+						database updates, etc). Only if we know these requests have no backend state side effects
+						can we safely set this to true.
+
+						- Default value: true
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="include-query-string-in-key" minOccurs="0" type="xs:boolean" default="false">
+					<xs:annotation><xs:documentation>
+						Determines if the cache key should include the query string.
+
+						Reference the description for get-with-query-string-has-side-effects above. This setting
+						relates to a different type of side effect, specifically if the customer server can respond
+						with different content to a get request based on the contents of the query string, then the
+						query string must be part of the cache key. This should not be enabled unless this is the case.
+
+						- Default value: false
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="vary" minOccurs="0" type="cache-vary-enum-type">
+					<xs:annotation><xs:documentation>
+						Comma separated list of ShapeShifter defined special values indicating conditions in a request
+						for which it is known the response from the origin server will vary significantly, and thus such
+						requests should not share the same key.	HTTP/1.1 specifies a response header "Vary" to enable
+						an origin server to inform caches that the response to the requested URI will vary based on the
+						value of this header in the request.	This explicit configuration is not intended to replace
+						this mechanism.	Rather it allows for specification of special situations that can not be
+						addressed via the HTTP/1.1 Vary header.	Currently the only valid value for this option is
+						"X-SS-COOKIE-PRESENT".	If specified, then for a given url, two distinct cache keys will be
+						used, one for requests that contain cookies, another for requests that do not.	This can not
+						be done via the HTTP/1.1 Vary header because that would cause cache keys to vary based on the
+						content of the cookie header(s) that are present, not just the existence of cookie header(s).
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="resource-load-failure-action">
+		<xs:annotation><xs:documentation>
+			Specifies which action to take when HINT fails to load an external resource (JS or CSS).
+
+			- Valid actions are: pass, drop, and default.
+			- Default value: pass
+		</xs:documentation></xs:annotation>
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:enumeration value="pass" />
+				<xs:enumeration value="drop" />
+				<xs:enumeration value="default" />
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+	<xs:element name="detection-rulebase">
+		<xs:annotation><xs:documentation>
+			A detection-rulebase is a collection of rules pertains to the reverse transformations of the requests
+			matching the URLs specified in the detection-rule.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element ref="detection-rule" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+		<xs:unique name="detection-rule-name-uniqueness">
+			<xs:selector xpath="detection-rule" />
+			<xs:field xpath="@rule-name" />
+		</xs:unique>
+	</xs:element>
+	<xs:element name="link-polymorphism-prefix">
+		<xs:simpleType>
+			<xs:restriction base="xs:token">
+				<xs:pattern value="/[a-zA-Z0-9]+" />
+				<xs:minLength value="4" />
+				<xs:maxLength value="50" />
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+	<xs:element name="link-polymorphism-rulebase">
+		<xs:annotation><xs:documentation>TODO, this whole feature is missing config document.</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element ref="link-polymorphism-prefix" minOccurs="1" />
+				<xs:element ref="link-polymorphism-rule" maxOccurs="unbounded" />
+				<xs:element ref="default-link-polymorphism-rule" minOccurs="0" maxOccurs="1" />
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+		<xs:unique name="link-polymorphism-rule-name-uniqueness">
+			<xs:selector xpath="link-polymorphism-rule" />
+			<xs:field xpath="@rule-name" />
+		</xs:unique>
+	</xs:element>
+	<xs:element name="link-polymorphism-rule">
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element name="lp-uri" type="no-query-uri" />
+				<xs:element name="include-query-string" minOccurs="0" type="xs:boolean" />
+				<xs:element name="valid-for-seconds" minOccurs="0" type="pos-int-max-10000" />
+				<xs:element name="replay-count" minOccurs="0" type="nn-int-max-1000" />
+				<xs:element name="predictable-prefix" minOccurs="0" type="xs:token" />
+				<xs:element name="error-action" minOccurs="0" type="error-action-type" />
+			</xs:all>
+			<xs:attribute name="rule-name" type="strlen-max-1000">
+				<xs:annotation><xs:documentation>
+					Symbolic name of this rule. Must be unique within link-polymorphism-rulebase.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="enabled" type="xs:boolean" default="true">
+				<xs:annotation><xs:documentation>Specifies if this rule is enabled or disabled.</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="default-link-polymorphism-rule">
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="include-query-string" minOccurs="0" type="xs:boolean" />
+				<xs:element name="valid-for-seconds" minOccurs="0" type="pos-int-max-10000" />
+				<xs:element name="replay-count" minOccurs="0" type="nn-int-max-1000" />
+				<xs:element name="predictable-prefix" minOccurs="0" type="xs:token" />
+				<xs:element name="error-action" minOccurs="0" type="error-action-type" />
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="detection-rule">
+		<xs:annotation><xs:documentation>
+			To specify a reverse transformation rule.
+			TODO, refer Botwall Guide for better descriptions, and provide link.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element name="match-condition" type="match-condition-ref">
+					<xs:annotation><xs:documentation>
+						Specify the matching criteria to filter the http requests that this detection-rule should be applied.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="service" minOccurs="0" type="strlen-max-1000" />
+				<xs:element name="allowed-untransformed-names" minOccurs="0" type="xs:token" />
+				<xs:element name="detect-action" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Specifies the action to take when an attack is detected by HINT.
+					</xs:documentation></xs:annotation>
+					<xs:complexType>
+						<xs:all>
+							<xs:element name="action">
+								<xs:annotation><xs:documentation>
+									Specifies which type of action to take when an attack is detected by HINT.
+									When an attack is detected, ShapeShifter can take one of these actions: pass, drop,
+									redirect, challenge, default, and custom.
+
+									- Default: default
+								</xs:documentation></xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:token">
+										<xs:enumeration value="drop">
+											<xs:annotation><xs:documentation>Stop processing the request.</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="pass">
+											<xs:annotation><xs:documentation>
+												The request is forwarded to the server regardless whether an attack is detected.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="redirect">
+											<xs:annotation><xs:documentation>
+												To redirect the user browser to a URL specified by &lt;redirect-url&gt;.
+												If the action is redirect, detect-action also has a redirect-url child element.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="challenge">
+											<xs:annotation><xs:documentation>
+												Send back a challenge if abnormal behavior is detected.
+												The challenge-option specifies more options, such like whether to
+												challenge when every time or only when first time a suspected request
+												is detected from a same source.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="default">
+											<xs:annotation><xs:documentation>
+												Allow customer to customize an action for a detected attack.
+												With 'default', the action under global/defaults/attacks-actions is used.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+										<xs:enumeration value="custom">
+											<xs:annotation><xs:documentation>
+												Allow customer to customized actions for detected attack.
+												It works the same as "default" does. The different is that it allows us to specify the rule name by
+												using the "custom-rule" configuration.
+											</xs:documentation></xs:annotation>
+										</xs:enumeration>
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element ref="redirect-url" minOccurs="0">
+								<xs:annotation><xs:documentation>
+									Specifying which URL the HINT will redirect the browser to, if the action is redirect.
+									The URL supports special placeholders which allows the injection of request data into the specified URL string.
+									As of now, it supports two special placeholders: {{host}} and {{uri}}. If used, {{host}} will be substituted 
+									with the incoming request's host; {{uri}} is replaced with the incoming request's uri path.
+								</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="custom-rule" minOccurs="0">
+								<xs:annotation><xs:documentation>
+									When action is 'custom', using the 'ref' attribute of 'custom-rule', we can specify the 
+									attack-detection-actions-rule (defined under attack-detection-actions-rules) to be used.
+								</xs:documentation></xs:annotation>
+								<xs:complexType>
+									<xs:attribute name="ref" type="non-empty-string" use="required" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="response-status-code" minOccurs="0" type="pos-int-max-1000">
+								<xs:annotation><xs:documentation>Custom status code for the 'redirect' response from SSE when it detected an attack</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element ref="response-reason-phrase" minOccurs="0">
+								<xs:annotation><xs:documentation>Custom reason phrase for the 'redirect' response from SSE when it detected an attack</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="response-custom-body" type="non-empty-string" minOccurs="0">
+								<xs:annotation><xs:documentation>Custom body for the 'redirect' responss from SSE when it detected an attack</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="response-content-type" type="non-empty-string" minOccurs="0">
+								<xs:annotation><xs:documentation>Content type of the 'redirect' responss from SSE when it detected an attack</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="traffic-tag" minOccurs="0" type="strlen-max-1000">
+								<xs:annotation><xs:documentation>TODO, is this part of match-condition, or to tag a some traffic?</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element ref="challenge-option" minOccurs="0">
+								<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+							</xs:element>
+							<xs:element name="challenge-original-field-names" minOccurs="0" type="strlen-max-1000">
+								<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+							</xs:element>
+						</xs:all>
+						<xs:attribute name="reuse-max" type="nn-int-max-100000" />
+						<xs:attribute name="enforce-reuse-max" type="xs:boolean" default="true"/>
+						<xs:attribute name="timing-threshold" type="nn-int-max-100000" />
+						<xs:attribute name="session-length-s"  type="session-length-type"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:all>
+			<xs:attribute name="rule-name" type="strlen-max-1000">
+				<xs:annotation><xs:documentation>
+					Symbolic name of this rule. Must be unique within detection-rulebase.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="enabled" type="xs:boolean" default="true">
+				<xs:annotation><xs:documentation>Specifies if this rule is enabled or disabled.</xs:documentation></xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="detect-untransformed-names" type="xs:boolean" default="false">
+				<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="attack-detection-action">
+		<xs:annotation><xs:documentation>
+			An attack-detection-action associates an action with a detected attack.
+			It has two mandatory child elements: cause and action, the specified action is used when the specified cause is detected.
+			It also has other optional children such as: redirect-url if the action is redirect, customized
+			response-status-code and customized response-reason-phrase for the response sent back to the browser when an attack happened.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="action" default="pass">
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="drop" />
+							<xs:enumeration value="pass" />
+							<xs:enumeration value="redirect" />
+							<xs:enumeration value="challenge" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element ref="redirect-url" minOccurs="0" />
+				<xs:element name="response-status-code" minOccurs="0" type="pos-int-max-1000" />
+				<xs:element ref="response-reason-phrase" minOccurs="0" />
+				<xs:element name="response-custom-body" type="non-empty-string" minOccurs="0"/>
+				<xs:element name="response-content-type" type="non-empty-string" minOccurs="0"/>
+				<xs:element name="traffic-tag" minOccurs="0" type="strlen-max-1000" />
+				<xs:element ref="challenge-option" minOccurs="0" />
+				<xs:element name="challenge-original-field-names" minOccurs="0" type="strlen-max-1000">
+					<xs:annotation><xs:documentation>
+						Define a comma-separated list of HTML field names, which are the original ones without any transformation.
+
+						Note that we allow null strings or whitespace strings to be configured for challenge-original-field-names.
+						In this case, the system think that there is not a parameter to be changed for the HTTP requests.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+			<xs:attribute name="cause" type="cause" use="required" />
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="cause">
+		<xs:annotation><xs:documentation>A name specifying the cause of the detected attack.</xs:documentation></xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="EXCEPTION">
+				<xs:annotation><xs:documentation>Catch all exception when trying to decrypt the crypt token.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="STATE_MISSING">
+				<xs:annotation><xs:documentation>State information used to reversely transform the http request is missing.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="STATE_DECRYPTION_FAILURE">
+				<xs:annotation><xs:documentation>State information cannot be decrypted.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="SESSION_TIMEOUT">
+				<xs:annotation><xs:documentation>The http request with a state information is submitted after the page timeout which is typically 10 minutes.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="MAX_NUMBER_OF_SESSIONS_EXCEEDED">
+				<xs:annotation><xs:documentation>The same state information in http request has been submitted more than the MAX number of times. MAX is typically 1.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="STATE_DATA_CORRUPTED">
+				<xs:annotation><xs:documentation>State information was corrupted.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="MULTIPLE_STATES">
+				<xs:annotation><xs:documentation>Multiple secure tokens in the form submission.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="TOKEN_AGE_CHECK_FAILURE">
+				<xs:annotation><xs:documentation>Secure token in incoming request too old.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="SESSION_LENGTH_CHECK_FAILURE">
+				<xs:annotation><xs:documentation>Transformed page generating incoming request is too old.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="REFERER_SESSION_LENGTH_CHECK_FAILURE">
+				<xs:annotation><xs:documentation>Incoming request contains a referrer header from another transformed page which is too old.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="PAYLOAD_TOO_LARGE">
+				<xs:annotation><xs:documentation>Transaction payload exceeded max length.</xs:documentation></xs:annotation>
+			</xs:enumeration>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:complexType name="error-action-type">
+		<xs:sequence>
+			<xs:element name="action">
+				<xs:simpleType>
+					<xs:restriction base="xs:token">
+						<xs:enumeration value="drop" />
+						<xs:enumeration value="pass" />
+						<xs:enumeration value="redirect" />
+						<xs:enumeration value="default" />
+						<xs:enumeration value="custom" />
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:element>
+			<xs:element ref="redirect-url" minOccurs="0" />
+			<xs:element name="response-status-code" minOccurs="0" type="pos-int-max-1000" />
+			<xs:element ref="response-reason-phrase" minOccurs="0" />
+		</xs:sequence>
+	</xs:complexType>
+	<xs:element name="response-reason-phrase">
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:minLength value="1" />
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+	<xs:element name="header-rulebase">
+		<xs:annotation><xs:documentation>
+			HINT allows header insertion to requests and response going through HINT.
+			The header-rulebase element is used to specify the collection of rules pertains to header insertion
+			(and other future header-related operations).
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element ref="header-rule" maxOccurs="unbounded" />
+			</xs:sequence>
+			<xs:attribute name="override" type="xs:boolean" fixed="true" />
+		</xs:complexType>
+		<xs:unique name="header-rule-name-uniqueness">
+			<xs:selector xpath="header-rule" />
+			<xs:field xpath="@rule-name" />
+		</xs:unique>
+	</xs:element>
+	<xs:element name="header-rule">
+		<xs:complexType>
+			<xs:all>
+				<xs:element ref="apply-countermeasure-periods" minOccurs="0" />
+				<xs:element name="match-condition" type="match-condition-ref" />
+				<xs:element name="service" minOccurs="0" type="strlen-max-1000" />
+				<xs:element ref="x-frame-options" minOccurs="0" />
+				<xs:element ref="x-forwarded-for-action" minOccurs="0" />
+				<xs:element ref="add" minOccurs="0" />
+			</xs:all>
+			<xs:attribute name="rule-name" type="strlen-max-1000">
+				<xs:annotation><xs:documentation>
+					Symbolic name of this rule. Must be unique within header-rulebase.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="enabled" type="xs:boolean" default="true">
+				<xs:annotation><xs:documentation>Specifies if this rule is enabled or disabled.</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="x-frame-options">
+		<xs:annotation><xs:documentation>
+			Allows the insertion of X-Frame-Options header into the response,
+			if response from the server doesn't contain one. The insertion will only happen if the page was transformed.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="type" type="x-frame-options-type">
+					<xs:annotation><xs:documentation>
+						specifies the value for the X-Frame-Options header: DENY, SAMEORIGIN or ALLOW-FROM.
+
+						If ALLOW-ORIGIN is used, it must be followed by a valid origin, which should be specified by
+						&lt;origin&gt; in format of scheme://domain:custom_port/.
+
+						ALLOW-FROM is supported only by Firefox, and likely to be removed from the spec, so it's not recommended to use one.
+
+						- TODO: to validate origin is specified for allow-origin.
+						- TODO: instead of give upper and lowercase options, how about just use lower-case?
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="origin" minOccurs="0" type="xs:anyURI">
+					<xs:annotation><xs:documentation>
+						Specifying a origin URL, in format of scheme://domain:custom_port/, for example, https://example.com/.
+						This origin is only used for X-Frame-Options header ALLOW-ORIGIN.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:simpleType name="x-frame-options-type">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="DENY" />
+			<xs:enumeration value="deny" />
+			<xs:enumeration value="SAMEORIGIN" />
+			<xs:enumeration value="sameorigin" />
+			<xs:enumeration value="ALLOW-FROM" />
+			<xs:enumeration value="allow-from" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:element name="x-forwarded-for-action">
+		<xs:annotation><xs:documentation>
+			Allows to disclose the IP address of last device in the X-Forwarded-For header
+			and to manipulate existing X-Forwarded-For headers per header policy.
+			The x-forwarded-for-action defines the behavior for matching URI and host.
+
+			- By default, ShapeShifter will append the previous device's IP address to the first existing X-Forwarded-For header, if exists.
+			Otherwise, it will create a new entry.
+			- Only one x-forwarded-for-action can be specified per header-rule policy.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="use-new-header" minOccurs="0" type="strlen-max-1000">
+					<xs:annotation><xs:documentation>Appends a new header with specified name.</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="max-len" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						If final header name/value pair size exceeds max-len, new header will be appended.
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:pattern value="[1-9][0-9]*(k|K|m|M|g|G)?" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element ref="header-action" minOccurs="0" />
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="header-action">
+		<xs:annotation><xs:documentation>
+			Can be append or replace, and is invoked if incoming requests contains single X-Forwarded-For header.
+		</xs:documentation></xs:annotation>
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:enumeration value="append" />
+				<xs:enumeration value="replace" />
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+	<xs:element name="add">
+		<xs:annotation><xs:documentation>
+			(hidden, for Shape only)
+
+			With this, we can specify rules to insert the headers to the request and/or response.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="http-header" maxOccurs="unbounded">
+					<xs:annotation><xs:documentation>
+						One or more http-header elements, to specify header(s) to be inserted into the http request add/or response.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="http-header">
+		<xs:annotation><xs:documentation>
+			Allows specification of an header.
+
+			Use of this element with the add element allows header insertion into the request and/or response.
+			This element has three child elements: name, value, and direction.
+
+			Example: http header name: X-SS-Transformation, value: simple-transform, direction: response.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="name" type="strlen-max-1000">
+					<xs:annotation><xs:documentation>Specify the name of the header.</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="value" type="strlen-max-1000">
+					<xs:annotation><xs:documentation>Specify the value of the header.</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+			<xs:attribute name="direction" type="direction" default="both">
+				<xs:annotation><xs:documentation>
+					An optional field to indicate which direction should the HINT insert the header: to the request, to the response, or both.
+
+					- Valid values are request, response, and both.
+					- Default : response	TODO, code and doc not in sync.
+				</xs:documentation></xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="direction">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="request" />
+			<xs:enumeration value="response" />
+			<xs:enumeration value="both" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:element name="redirect-url" type="ss-non-empty-uri" />
+	<xs:element name="passive-bot-recognition">
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="browser-consistency" type="xs:boolean" />
+				<xs:element name="bcc-feedback" minOccurs="0" type="xs:boolean" />
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="challenge-option">
+		<xs:annotation><xs:documentation>
+			TODO, is this only for behavior-poly?
+
+			By default, If the client of an http request is suspected to be a bot, we will change the password value of
+			the http request no matter how many times it tries to send the http request.
+		</xs:documentation></xs:annotation>
+		<xs:simpleType>
+			<xs:restriction base="xs:token">
+				<xs:enumeration value="challenge_once">
+					<xs:annotation><xs:documentation>
+						We change the password value of an http request for the first time
+						when it is suspected to be from a bot. When the suspicious bot sends the http request again,
+						we will let it go as normal.
+					</xs:documentation></xs:annotation>
+				</xs:enumeration>
+				<xs:enumeration value="challenge_always">
+					<xs:annotation><xs:documentation>
+						We change the password value of an http request all the time if it is suspected from a bot.
+					</xs:documentation></xs:annotation>
+				</xs:enumeration>
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+	<xs:element name="latency-measurement">
+		<xs:annotation><xs:documentation>
+			During the life cycle of each HTTP transaction, latency is measured at different levels.
+			You can change the level to get more detailed latency breakdown.
+			Also, you can configure thresholds to generate event logs for transactions whose latency exceeds those thresholds.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="level" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Default is INFO, can be changed to DEBUG or TRACE for more detailed latency measurements.
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:string">
+							<xs:enumeration value="INFO" />
+							<xs:enumeration value="DEBUG" />
+							<xs:enumeration value="TRACE" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element ref="latency-thresholds" minOccurs="0" />
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="latency-thresholds">
+		<xs:annotation><xs:documentation>
+			Thresholds to generate event logs for transactions whose latency exceeds any of those thresholds.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="request-latency-threshold-ms" minOccurs="0" type="nn-int-max-10000">
+					<xs:annotation><xs:documentation>
+						Threshold for latency added on request in ms. Default is 0, which means this threshold is not enabled.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="response-latency-threshold-ms" minOccurs="0" type="nn-int-max-10000">
+					<xs:annotation><xs:documentation>
+						Threshold for latency added on response in ms. Default is 0, which means this threshold is not enabled.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="total-latency-threshold-ms" minOccurs="0" type="nn-int-max-10000">
+					<xs:annotation><xs:documentation>
+						Threshold for latency between a request is received and a response is sent in ms. Default is 0,
+						which means this threshold is not enabled.
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+        
+        <!-- information-collection -->
+        <xs:complexType name="information-collection">
+            <xs:annotation><xs:documentation>
+                Controls information collected and reported to SDS.
+            </xs:documentation></xs:annotation>
+            <xs:all>
+                <xs:element name="collect" type="ic-collect" minOccurs="0" />
+                <xs:element name="protect" type="ic-protect" minOccurs="0" />
+            </xs:all>
+            <xs:attribute name="impl" type="non-empty-string">
+                <xs:annotation><xs:documentation>
+                    Specifies the information collection implementation class to be used.
+                </xs:documentation></xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="max-payload-size" type="xs:positiveInteger">
+                <xs:annotation><xs:documentation>
+                    Specifies the maximum size of a telemetry message sent to SDS.  If a telemetry message exceeds
+                    this size, it will be dropped.
+                </xs:documentation></xs:annotation>
+            </xs:attribute>
+						<xs:attribute name="dynamic-change-safe" fixed="true" />
+        </xs:complexType>
+        
+        <xs:complexType name="ic-protect">
+            <xs:annotation><xs:documentation>
+                Specifies information that is potentially PII and how it is hashed.
+            </xs:documentation></xs:annotation>
+            <xs:all>
+                <xs:element minOccurs="0" name="http-request" type="ic-protect-http-request" />
+            </xs:all>
+            <xs:attribute name="algorithm" default="SHA-1">
+                <xs:annotation><xs:documentation>
+                    Specifies the hash algorithm used.
+                </xs:documentation></xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="non-empty-string">
+                        <xs:enumeration value="SHA-1" />
+                        <xs:enumeration value="SHA-256" />
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="salt" use="required" type="xs:base64Binary">
+                <xs:annotation><xs:documentation>
+                    The Base64 encoded salt used to hash any potentially PII information.
+                    The value must be encoded using "The Base64 Alphabet" as specified in Table 1 of RFC 4648 and RFC 2045.
+                    
+                    NOTE: the salt must, at minimum, be the same length as the digest size of the algorithm selected.
+                    
+                    The larger the salt value the better the protection against dictionary attacks
+                    (so long as salt is not known) at the cost of increased processing time.
+                </xs:documentation></xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="min-value-length-without-padding" use="optional" type="nn-int-max-1000">
+                <xs:annotation><xs:documentation>
+                    To provide protection against dictionary attacks even if the salt is known, a minimum
+                    value length can be specified.  When hashing values shorter than this length, the value
+                    will be padded until it is >= the specified min-value-length-without-padding.  This
+                    will increase the processing time required to hash values.
+                </xs:documentation></xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+
+        <xs:complexType name="ic-protect-http-request">
+            <xs:annotation><xs:documentation>
+                Specifies http request information that is potentially PII.
+            </xs:documentation></xs:annotation>
+            <xs:all>
+                <xs:element name="url" minOccurs="0">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element name="path" minOccurs="0">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="hash-path-elements" minOccurs="0" maxOccurs="unbounded">
+                                            <xs:annotation><xs:documentation>
+                                                Specifies path elements, if any, that contain PII and should be hashed.  Identification is based by position (index origin 0).
+                                                
+                                                For example in the path /a/b/c/d/e if c and e were PII you would specify the following to ensure they would be hashed.
+                                                <hashed-path-elememts url="\.*" match-type="regex">3 5</hashed-path-elememts>
+                                            </xs:documentation></xs:annotation>
+                                            <xs:complexType>
+                                                <xs:all>
+                                                    <xs:element name="elements" minOccurs="1">
+                                                        <xs:complexType>
+                                                            <xs:simpleContent>
+                                                                <xs:extension base="pos-int-max-100-list">
+                                                                </xs:extension>
+                                                            </xs:simpleContent>
+                                                        </xs:complexType>
+                                                    </xs:element>
+                                                </xs:all>
+                                                <xs:attribute name="url" type="non-empty-string" use="required">
+                                                    <xs:annotation><xs:documentation>
+                                                        Specifies the url(s) that contain path elements containing PII.
+                                                    </xs:documentation></xs:annotation>
+                                                </xs:attribute>
+                                                <xs:attribute name="match-type" type="match-type" use="required">
+                                                    <xs:annotation><xs:documentation>
+                                                        Specifies how the url matching is performed.
+                                                    </xs:documentation></xs:annotation>
+                                                </xs:attribute>
+                                            </xs:complexType>
+                                        </xs:element>
+                                        <xs:element name="remove-path-elements" minOccurs="0" maxOccurs="unbounded">
+                                            <xs:annotation><xs:documentation>
+                                                Specifies path elements, if any, that contain PII and should not be reported to SDS.
+                                                Identification is based by position (index origin 0).
+                                                
+                                                For example in the path /a/b/c/d/e if c and e were PII you would specify the following to ensure they would not
+                                                be reported.
+                                                <remove-path-elements url="\.*" match-type="regex">3 5</remove-path-elements>
+                                            </xs:documentation></xs:annotation>
+                                            <xs:complexType>
+                                                <xs:all>
+                                                    <xs:element name="elements" minOccurs="1">
+                                                        <xs:complexType>
+                                                            <xs:simpleContent>
+                                                                <xs:extension base="pos-int-max-100-list">
+                                                                </xs:extension>
+                                                            </xs:simpleContent>
+                                                        </xs:complexType>
+                                                    </xs:element>
+                                                </xs:all>
+                                                <xs:attribute name="url" type="non-empty-string" use="required">
+                                                    <xs:annotation><xs:documentation>
+                                                        Specifies the url(s) that contain path elements containing PII.
+                                                    </xs:documentation></xs:annotation>
+                                                </xs:attribute>
+                                                <xs:attribute name="match-type" type="match-type" use="required">
+                                                    <xs:annotation><xs:documentation>
+                                                        Specifies how the url matching is performed.
+                                                    </xs:documentation></xs:annotation>
+                                                </xs:attribute>
+                                            </xs:complexType>
+                                        </xs:element>
+                                    </xs:sequence>
+                                    <xs:attribute name="array-obj" type="xs:boolean" fixed="true" />
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+
+        <xs:complexType name="ic-collect">
+            <xs:annotation><xs:documentation>
+                Controls information collected and reported to SDS.
+            </xs:documentation></xs:annotation>
+            <xs:all>
+                <xs:element name="http-request" type="ic-collect-http-request" minOccurs="0" />
+                <xs:element name="http-response" type="ic-collect-http-response" minOccurs="0" />
+                <xs:element name="user-js-telemetry" minOccurs="0">
+                    <xs:annotation><xs:documentation>
+                        Determines if user.js generated telemetry is reported to SDS.
+                    </xs:documentation></xs:annotation>
+                    <xs:complexType></xs:complexType>
+                </xs:element>
+                <xs:element name="browser-js-telemetry" minOccurs="0">
+                    <xs:annotation><xs:documentation>
+                        Determines if browser.js generated telemetry is reported to SDS.
+                    </xs:documentation></xs:annotation>
+                    <xs:complexType></xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+        
+        
+        <xs:complexType name="ic-collect-http-request">
+            <xs:annotation><xs:documentation>
+                Controls http request information collection and reporting to SDS.
+            </xs:documentation></xs:annotation>
+            <xs:all>
+                <xs:element name="url" minOccurs="0">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element name="path" minOccurs="0" type="ic-collect-path" />
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="body" minOccurs="0">
+                    <xs:complexType>
+                        <xs:all>
+                            <xs:element name="parameters" minOccurs="0">
+                                <xs:complexType>
+                                    <xs:sequence>
+                                        <xs:element name="collect-value" type="collect-parameter-value" minOccurs="0" maxOccurs="unbounded" />
+                                    </xs:sequence>
+                                    <xs:attribute name="names" type="xs:boolean" default="true">
+                                        <xs:annotation><xs:documentation>
+                                            Determines if request body parameter names are collected and reported to SDS.
+                                        </xs:documentation></xs:annotation>
+                                    </xs:attribute>
+                                    <xs:attribute name="override" fixed="true" />
+                                    <xs:attribute name="array-obj" type="xs:boolean" fixed="true" />
+                                </xs:complexType>
+                            </xs:element>
+                        </xs:all>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="headers" minOccurs="0">
+                    <xs:annotation><xs:documentation>
+                        NOTE: if specified in custom.xml it will override the setting in default.xml so be sure to
+                        copy the headers from default.xml into custom.xml and then edit it to avoid unintentionally
+                        disabling collection of header values we always want to collect.
+                    </xs:documentation></xs:annotation>
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="header" type="ic-collect-header" minOccurs="0" maxOccurs="unbounded" />
+                        </xs:sequence>
+                        <xs:attribute name="override" fixed="true" />
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+        
+        <xs:complexType name="ic-collect-http-response">
+            <xs:annotation><xs:documentation>
+                Controls http response information collection and reporting to SDS.
+            </xs:documentation></xs:annotation>
+            <xs:all>
+                <xs:element name="headers" minOccurs="0">
+                    <xs:annotation><xs:documentation>
+                        NOTE: if specified in custom.xml it will override the setting in default.xml so be sure to
+                        copy the headers from default.xml into custom.xml and then edit it to avoid unintentionally
+                        disabling collection of header values we always want to collect.
+                    </xs:documentation></xs:annotation>
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="header" type="ic-collect-header" minOccurs="0" maxOccurs="unbounded" />
+                        </xs:sequence>
+                        <xs:attribute name="override" fixed="true" />
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+        
+        <xs:complexType name="ic-collect-path">
+            <xs:all>
+                <xs:element name="parameters" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="collect-value" type="collect-parameter-value" minOccurs="0" maxOccurs="unbounded" />
+                        </xs:sequence>
+                        <xs:attribute name="names" type="xs:boolean" default="true">
+                            <xs:annotation><xs:documentation>
+                                Determines if url path parameter names are collected and reported to SDS.
+                            </xs:documentation></xs:annotation>
+                        </xs:attribute>
+                        <xs:attribute name="override" fixed="true" />
+                        <xs:attribute name="array-obj" type="xs:boolean" fixed="true" />
+                    </xs:complexType>
+                </xs:element>
+            </xs:all>
+        </xs:complexType>
+
+        <xs:complexType name="ic-collect-header">
+            <xs:all>
+                <xs:element name="path" minOccurs="0" type="ic-collect-path" />
+            </xs:all>
+            <xs:attribute name="name" type="non-empty-string" use="required" />
+        </xs:complexType>
+        
+        <xs:complexType name="collect-parameter-value">
+            <xs:annotation><xs:documentation>
+                Used to specify, by name, http parameters whose values should be collected.
+            </xs:documentation></xs:annotation>
+            <xs:attribute name="name" type="non-empty-string" use="required" />
+            <xs:attribute name="match-type" type="match-type" default="exact" />
+        </xs:complexType>
+        
+	<!-- telemetry reporting -->
+	<xs:complexType name="telemetry-reporting">
+		<xs:annotation><xs:documentation>
+        DEPRECATED IN ANAHEIM - will be removed in Bakersfield.  Use information-collection element instead.
+        Controls telemetry reporting behavior, whether to export certain types of telemetry data to the
+        ShapeSecurity SDS cloud server for data analysis. Enabling the telemetry helps SDS to monitor the
+        attacks and to improve the countermeasure efficacy.
+		</xs:documentation></xs:annotation>
+		<xs:all>
+			<xs:element name="include-url" minOccurs="0" type="xs:boolean">
+				<xs:annotation><xs:documentation>
+					Specifies whether a telemetry can include the request's URL information, if applicable to
+					that telemetry. Right now it is applicable to Task Telemetry.
+
+					Default value : true
+				</xs:documentation></xs:annotation>
+			</xs:element>
+			<xs:element name="include-page-content" minOccurs="0" type="xs:boolean">
+				<xs:annotation><xs:documentation>
+					Specifies whether a telemetry can include the request's page content information, if applicable
+					to that telemetry. Right now it is applicable to Page-Visit Telemetry.
+
+					Default value : false
+				</xs:documentation></xs:annotation>
+			</xs:element>
+			<xs:element name="attack-telemetry" minOccurs="0" type="xs:boolean">
+				<xs:annotation><xs:documentation>
+					Specifies whether allow sending Attack Telemetry.
+					This serves as an individual knob as opposed to the global knob of "enabled" does.
+
+					Default value : false
+				</xs:documentation></xs:annotation>
+			</xs:element>
+			<xs:element name="page-visit-telemetry" minOccurs="0" type="xs:boolean">
+				<xs:annotation><xs:documentation>
+					Specifies whether allow sending Page-Visit Telemetry.
+					This serves as an individual knob as opposed to the global knob of "enabled" does.
+
+					Default value : false
+				</xs:documentation></xs:annotation>
+			</xs:element>
+			<xs:element name="user-telemetry" minOccurs="0" type="xs:boolean">
+				<xs:annotation><xs:documentation>
+					Specifies whether allow sending User Telemetry to SMC.
+					This serves as an individual knob as opposed to the global knob of "enabled" does.
+
+					Default value : false
+				</xs:documentation></xs:annotation>
+			</xs:element>
+		</xs:all>
+		<xs:attribute name="enabled" type="xs:boolean" default="true">
+			<xs:annotation><xs:documentation>
+				Specifies whether telemetry reporting is enabled or not, meaning whether or not any telemetries
+				are sent at all .
+			</xs:documentation></xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:complexType name="salt-rule">
+		<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+		<xs:all>
+			<xs:element name="match-condition" minOccurs="0" type="match-condition-ref" />
+			<xs:element name="replacement-map" minOccurs="0">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="replacement-map">
+							<xs:attribute name="ref" use="optional" type="non-empty-string" />
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="link-poly" minOccurs="0">
+				<xs:complexType>
+					<xs:complexContent>
+						<xs:extension base="link-poly">
+							<xs:attribute name="ref" use="optional" type="non-empty-string" />
+						</xs:extension>
+					</xs:complexContent>
+				</xs:complexType>
+			</xs:element>
+		</xs:all>
+		<xs:attribute name="enabled" type="xs:boolean" default="true" />
+	</xs:complexType>
+
+	<xs:complexType name="replacement-map">
+		<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+		<xs:sequence>
+			<xs:element name="attr" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element name="item" minOccurs="0" maxOccurs="unbounded">
+							<xs:complexType>
+								<xs:simpleContent>
+									<xs:extension base="xs:string">
+										<xs:attribute use="optional" name="compose" type="xs:string" />
+									</xs:extension>
+								</xs:simpleContent>
+							</xs:complexType>
+						</xs:element>
+					</xs:sequence>
+					<xs:attribute name="type" type="xs:string" use="required" />
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+		<xs:attribute name="enabled" type="xs:boolean" default="true" />
+	</xs:complexType>
+
+	<xs:complexType name="deferred">
+		<xs:annotation><xs:documentation>Indicates if countermeasure should be applied to dynamic elements as well</xs:documentation></xs:annotation>
+		<xs:attribute name="enabled" type="xs:boolean" default="false" />
+	</xs:complexType>
+
+
+	<xs:complexType name="ajax">
+		<xs:annotation>
+			<xs:documentation>TODO</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element minOccurs="0" name="params" type="parameters"/>
+		</xs:all>
+		<xs:attribute default=".*" name="uri">
+			<xs:annotation>
+				<xs:documentation>
+					A string specifies the path component of the URL of the page. uri starts with a single forward slash,
+					for example, "/signup". It supports regular expression.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute default="regex" name="uri-match-type" type="match-type"/>
+		<xs:attribute default=".*" name="host">
+			<xs:annotation>
+				<xs:documentation>
+					A string specifies the domain of the page, for example, "www.shapesecurity.com". It supports regular
+					expression.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute default="regex" name="host-match-type" type="match-type"/>
+		<xs:attribute default="all" name="request-method" type="request-method">
+			<xs:annotation>
+				<xs:documentation>
+					Indicates the method of incoming request. It is use as one of the matching criteria. Possible values
+					are get, post or all.
+				</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="version" type="xs:string" use="optional"/>
+	</xs:complexType>
+
+
+	<xs:complexType name="link-poly">
+		<xs:annotation><xs:documentation>TODO</xs:documentation></xs:annotation>
+		<xs:all>
+			<xs:element name="nacl" minOccurs="0" type="nacl-string" />
+		</xs:all>
+		<xs:attribute name="version" type="xs:string" use="optional" />
+		<xs:attribute name="enabled" type="xs:boolean" default="true" />
+	</xs:complexType>
+
+	<xs:complexType name="match-condition-def">
+		<xs:annotation><xs:documentation>A reference definition of match condition criteria.</xs:documentation></xs:annotation>
+		<xs:sequence>
+			<xs:element name="http-request" maxOccurs="unbounded" type="http-request" />
+		</xs:sequence>
+		<xs:attribute name="id" type="non-empty-string" use="required" />
+		<xs:attribute name="array-obj" type="xs:boolean" fixed="true" />
+	</xs:complexType>
+
+	<xs:complexType name="match-condition-ref">
+		<xs:annotation>
+			<xs:appinfo>XSDDOC_HEADER, XSDDOC_SHARED</xs:appinfo>
+			<xs:documentation>
+				Specify the matching criteria to filter the http requests that the associated rule should be applied.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:sequence>
+			<xs:element name="http-request" minOccurs="0" maxOccurs="unbounded" type="http-request" />
+		</xs:sequence>
+		<xs:attribute name="ref" type="non-empty-string" use="optional">
+			<xs:annotation><xs:documentation>
+				A optional id name to refer a criteria defined in the global "references" section.
+				If both 'ref' and 'http-request' are configured, 'ref' has the precedence. If 'ref' is used,
+				the 'id' referenced by 'ref' must be defined.    
+			</xs:documentation></xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+
+	<xs:complexType name="http-request">
+		<xs:sequence>
+			<xs:element name="query-params" minOccurs="0" maxOccurs="unbounded" type="parameters" />
+			<xs:element name="body-params" minOccurs="0" maxOccurs="unbounded" type="parameters" />
+			<xs:element name="headers" minOccurs="0" maxOccurs="unbounded" type="http-headers" />
+		</xs:sequence>
+		<xs:attribute name="uri" type="regex-string" default=".*">
+			<xs:annotation><xs:documentation>
+				A string specifies the path component of the URL of the page. uri starts with a single forward slash,
+				for example, "/signup". It supports regular expression.
+			</xs:documentation></xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="uri-match-type" type="match-type" default="regex">
+			<xs:annotation><xs:documentation>
+				Specifying the type of string matching on the uri. Possible values are regex, partial, exact
+				The default is 'regex'
+			</xs:documentation></xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="host" type="regex-string" default=".*">
+			<xs:annotation><xs:documentation>
+				A string specifies the domain of the page, for example, "www.shapesecurity.com". It supports regular
+				expression.
+			</xs:documentation></xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="host-match-type" type="match-type" default="regex">
+			<xs:annotation><xs:documentation>
+				Specifying the type of string matching on the host. Possible values are regex, partial, exact
+				The default is 'regex'
+			</xs:documentation></xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="request-method" type="request-method" default="all">
+			<xs:annotation><xs:documentation>
+				Indicates the method of incoming request. It is use as one of the matching criteria. Possible values
+				are get, post or all.
+			</xs:documentation></xs:annotation>
+		</xs:attribute>
+	</xs:complexType>
+
+	<xs:simpleType name="request-method">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="get" />
+			<xs:enumeration value="post" />
+			<xs:enumeration value="all" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="parameters">
+		<xs:sequence>
+			<xs:element name="param" minOccurs="1" maxOccurs="unbounded" type="name-value-type" />
+		</xs:sequence>
+		<xs:attribute name="disable-rule" type="xs:boolean" default="false" />
+	</xs:complexType>
+
+	<xs:complexType name="http-headers">
+		<xs:sequence>
+			<xs:element name="header" minOccurs="1" maxOccurs="unbounded" type="name-value-type" />
+		</xs:sequence>
+		<xs:attribute name="disable-rule" type="xs:boolean" default="false" />
+	</xs:complexType>
+
+	<xs:complexType name="name-value-type">
+		<xs:all>
+			<xs:element name="name" type="xs:string" />
+			<xs:element name="value" minOccurs="0" type="xs:string" />
+		</xs:all>
+		<xs:attribute name="match-value" type="match-type" default="exact" />
+	</xs:complexType>
+
+
+	<xs:simpleType name="match-type">
+    <xs:annotation><xs:documentation>The "partial" value is deprecated, use contains instead.</xs:documentation></xs:annotation>
+		<xs:restriction base="xs:token">
+			<xs:enumeration value="exact" />
+			<xs:enumeration value="partial" />
+			<xs:enumeration value="contains" />
+			<xs:enumeration value="regex" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!-- POLICY: end! -->
+
+	<xs:element name="web-traffic-capture">
+		<xs:annotation><xs:documentation>
+			Web Traffic Capture feature configuration.
+			Allows capture of internal state such that it can be replayed later.
+		</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="capture-mode" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Operation mode of the Web Traffic Capture feature.
+
+						- Default value: disabled
+						- Allowable values:
+						- disabled : completely disables capture and Rest-API
+						- local-only : able to capture states to /var/shape/capture directory; cannot download or inspect captures
+						- remote-access : able to capture states to /tmp/capture directory; rest API is fully enabled
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="disabled" />
+							<xs:enumeration value="local-only" />
+							<xs:enumeration value="remote-access" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="capture-dir" type="xs:string" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Specify default directory used to capture files
+						May not specify subdirectories, including '/' '~' '..' and '.'
+						Default value: "default"
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="max-count" type="xs:integer" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Specify maximum number of states which can be captured.
+						- Default value: 1000
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="max-size" type="xs:integer" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Specify maximum storage space (in kb)
+						- Default value: 0 (disable enforcement)
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="wrap-mode" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Behavior when capacity is reached.
+						- Default value: off
+						- off : will stop capture 
+						- on : will delete oldest file
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="off" />
+							<xs:enumeration value="on" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="auto" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Indicates whether or not to initiate WTC automatically on startup
+						- Default value: off
+						- off : do not start WTC automatically
+						- on : do start WTC automatically
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="off" />
+							<xs:enumeration value="on" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="ip-filter" type="regex-string" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Regular expression to specify source IP addresses that should have their sessions captured
+						Comparison is done against the source-IP address and any XFF header values
+						- Default value: null (equivalent to '.*' which matches all addresses)
+					</xs:documentation></xs:annotation>
+				</xs:element>
+				<xs:element name="pii-filter" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Indicates whether or not to engage PII filter (redacting sensitive data) when writing state
+						Note that this feature is imperfect at best.
+						- Default value: on
+						- off : do not engage PII filter
+						- on : do engage PII filter
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="off" />
+							<xs:enumeration value="on" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="trigger" minOccurs="0">
+					<xs:annotation><xs:documentation>
+						Set conditions (other than ip-filter match) where a WTC capture will be triggered.
+						Note that this mode will tend to capture only the outgoing state since detection occurs after the capture event
+						- Default value: none
+						- error : will trigger capture if an error condition is encountered
+						- attack : will trigger capture if an attack is detected
+						- all : will trigger on any of the above
+						- none : will not trigger on any of the above
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="none" />
+							<xs:enumeration value="error" />
+							<xs:enumeration value="attack" />
+							<xs:enumeration value="all" />
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+				<xs:element name="clean" minOccurs="0" type="xs:boolean" default="true">
+					<xs:annotation><xs:documentation>
+						Indicates whether or not to empty out the capture directory on startup.
+						If disabled, capture will attempt to append new captures to the existing files.
+						If the configuration has changed, this setting will be ignored and directory will be cleaned.
+						- Default value: true
+						- true : empty capture directory on startup
+						- false : attempt to append capture history to existing history
+					</xs:documentation></xs:annotation>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="debug">
+		<xs:annotation><xs:documentation>ShapeShifter debugging related configurations.</xs:documentation></xs:annotation>
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="hint-local-log-level" minOccurs="0" default="warn">
+					<xs:annotation><xs:documentation>
+						Purpose: Controls whether and what logs to be stored locally for troubleshooting purpose.
+
+						Note: logback.xml controls the hint.log log level, default to WARN, before this configuration is loaded.
+					</xs:documentation></xs:annotation>
+					<xs:simpleType>
+						<xs:restriction base="xs:token">
+							<xs:enumeration value="off">
+								<xs:annotation><xs:documentation>Disable logs of any severity level.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="error">
+								<xs:annotation><xs:documentation>Enable logs with severity level ERROR and higher.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="warn">
+								<xs:annotation><xs:documentation>Enable logs with severity level WARN and higher.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="info">
+								<xs:annotation><xs:documentation>Enable logs with severity level INFO and higher.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="debug">
+								<xs:annotation><xs:documentation>Enable logs with severity level DEBUG and higher. Important: this level may include PII info.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="trace">
+								<xs:annotation><xs:documentation>Enable logs of any severity level. Important: this level may include PII info.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+							<xs:enumeration value="all">
+								<xs:annotation><xs:documentation>Enable logs of any severity level. Important: this level may include PII info.</xs:documentation></xs:annotation>
+							</xs:enumeration>
+						</xs:restriction>
+					</xs:simpleType>
+				</xs:element>
+			</xs:all>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- cluster: end -->
+
+	<!-- shared elements -->
+	<xs:simpleType name="empty-string">
+		<xs:restriction base="xs:string">
+			<xs:minLength value="0" />
+			<xs:maxLength value="0" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="non-empty-string">
+		<xs:restriction base="xs:string">
+			<xs:minLength value="1" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ipv4-address">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ipv4-address-or-range">
+		<xs:annotation><xs:documentation>
+			An individual IPv4 address, or a subnet with /mask, or a contiguous arbitrary range x-y.
+		</xs:documentation></xs:annotation>
+		<xs:restriction base="xs:token">
+			<!--xs:pattern value="(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\-((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))|(((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\/[0-9]+)"
+				/ -->
+			<xs:pattern value="((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])" />
+			<xs:pattern
+					value="((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])/([3][0-2]|[0-2]?[0-9])" />
+			<xs:pattern
+					value="((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\-((25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="ipv4-addresses">
+		<xs:annotation><xs:documentation>
+			List of IPv4 addresses, each entry is specified as an individual IPv4 address, a subnet, or a range.
+		</xs:documentation></xs:annotation>
+		<xs:sequence>
+			<xs:element name="addr" maxOccurs="unbounded" type="ipv4-address-or-range" />
+		</xs:sequence>
+	</xs:complexType>
+
+	<xs:simpleType name="ss-domain">
+		<xs:restriction base="xs:string">
+			<xs:whiteSpace value="collapse" />
+			<xs:minLength value="1" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ss-uri">
+		<xs:restriction base="xs:anyURI">
+			<xs:whiteSpace value="collapse" />
+			<xs:minLength value="1" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="no-query-uri">
+		<xs:restriction base="xs:anyURI">
+			<xs:pattern value="https?://[^\?#]*" />
+			<xs:whiteSpace value="collapse" />
+			<xs:minLength value="1" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ss-port">
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="1" />
+			<xs:maxInclusive value="65535" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="path-str">
+		<xs:restriction base="xs:string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="1000" />
+			<xs:pattern value="[^\\]+" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="path-str-empty">
+		<xs:restriction base="xs:string">
+			<xs:minLength value="0" />
+			<xs:maxLength value="1000" />
+			<xs:pattern value="[^\\]*" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="memory-amount">
+		<xs:annotation><xs:documentation>
+			Memory amount specified in bytes, optionally with unit of G, M, K for gigabyte, megabyte, Kbyte.
+		</xs:documentation></xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="10" />
+			<xs:pattern value="[0-9]+[gGmMkK]?" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="strlen-max-10">
+		<xs:restriction base="non-empty-string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="strlen-max-100">
+		<xs:restriction base="non-empty-string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="strlen-max-1000">
+		<xs:restriction base="non-empty-string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="1000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="strlen-max-10000">
+		<xs:restriction base="non-empty-string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="10000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="nacl-string">
+		<xs:restriction base="non-empty-string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="100000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="regex-string">
+		<!-- simpleType regex-string is validated with Pattern.compile(), by ConfigurationValidator -->
+		<xs:restriction base="non-empty-string">
+			<xs:minLength value="1" />
+			<xs:maxLength value="10000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ss-vlan">
+		<xs:restriction base="xs:nonNegativeInteger">
+			<xs:maxInclusive value="4095" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="nn-int-max-10">
+		<xs:restriction base="xs:nonNegativeInteger">
+			<xs:maxInclusive value="10" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="nn-int-max-100">
+		<xs:restriction base="xs:nonNegativeInteger">
+			<xs:maxInclusive value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="nn-int-max-1000">
+		<xs:restriction base="xs:nonNegativeInteger">
+			<xs:maxInclusive value="1000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="nn-int-max-10000">
+		<xs:restriction base="xs:nonNegativeInteger">
+			<xs:maxInclusive value="10000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="nn-int-max-100000">
+		<xs:restriction base="xs:nonNegativeInteger">
+			<xs:maxInclusive value="100000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="nn-int-max-1000000">
+		<xs:restriction base="xs:nonNegativeInteger">
+			<xs:maxInclusive value="1000000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="pos-int-max-10">
+		<xs:restriction base="xs:positiveInteger">
+			<xs:maxInclusive value="10" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="pos-int-max-100">
+		<xs:restriction base="xs:positiveInteger">
+			<xs:maxInclusive value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+        
+  <xs:simpleType name="pos-int-max-100-list">
+    <xs:list itemType="pos-int-max-100" />
+  </xs:simpleType>
+
+	<xs:simpleType name="pos-int-max-1000">
+		<xs:restriction base="xs:positiveInteger">
+			<xs:maxInclusive value="1000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="pos-int-max-10000">
+		<xs:restriction base="xs:positiveInteger">
+			<xs:maxInclusive value="10000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="pos-int-max-100000">
+		<xs:restriction base="xs:positiveInteger">
+			<xs:maxInclusive value="100000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="pos-int-max-1000000">
+		<xs:restriction base="xs:positiveInteger">
+			<xs:maxInclusive value="1000000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="int-range-n10-10">
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="-10" />
+			<xs:maxInclusive value="10" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="int-range-n100-100">
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="-100" />
+			<xs:maxInclusive value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="int-range-n1000-1000">
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="-1000" />
+			<xs:maxInclusive value="1000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="int-range-n10000-10000">
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="-10000" />
+			<xs:maxInclusive value="10000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="double-range-0-1">
+		<xs:restriction base="xs:double">
+			<xs:minInclusive value="0.0" />
+			<xs:maxInclusive value="1.0" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ss-keepalive-connection-max">
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="0" />
+			<xs:maxInclusive value="10000" />
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ss-customer-id">
+		<xs:restriction base="xs:token">
+			<xs:pattern value="[0-9A-Za-z][-0-9A-Za-z]*"/>
+			<xs:minLength value="1"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ss-non-empty-uri">
+		<xs:restriction base="xs:anyURI">
+			<xs:minLength value="1" />
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:simpleType name="session-length-type">
+		<xs:restriction base="xs:integer">
+			<xs:minInclusive value="-1" />
+			<xs:maxInclusive value="86400" />
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>
